@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  perakende
+  toptanci
+}
+
+enum OrderStatus {
+  odeme_alindi
+  hazirlaniyor
+  kargoda
+  teslim_edildi
+  iptal
+}
+
+enum AuditLevel {
+  info
+  warn
+  error
+}
+
+model User {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String    @unique
+  password  String
+  role      UserRole  @default(perakende)
+  isAdmin   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orders    Order[]
+  payments  Payment[]
+  addresses Address[]
+}
+
+model Product {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  sku             String      @unique
+  name            String
+  category        String
+  image           String
+  gallery         String      @default("[]")
+  retailPrice     Int
+  stockStatus     String      @default("stokta")
+  wholesaleEnabled Boolean    @default(false)
+  description     String
+  active          Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orderItems      OrderItem[]
+  wholesaleTiers  WholesaleTier[]
+}
+
+model WholesaleTier {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId String   @db.ObjectId
+  minQty    Int
+  unitPrice Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, minQty])
+}
+
+model Order {
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String      @db.ObjectId
+  total             Int
+  status            OrderStatus @default(odeme_alindi)
+  shippingAddressId String?     @db.ObjectId
+  cargoCompany      String?
+  trackingCode      String?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingAddress   Address?    @relation(fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  items             OrderItem[]
+  payments          Payment[]
+
+  @@index([trackingCode])
+}
+
+model OrderItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @db.ObjectId
+  productId String?  @db.ObjectId
+  name      String
+  unitPrice Int
+  quantity  Int
+  lineTotal Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model Address {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  fullName  String
+  phone     String
+  city      String
+  district  String
+  address   String
+  postalCode String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@index([userId])
+}
+
+model Payment {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  orderId         String?  @db.ObjectId
+  stripeSessionId String   @unique
+  amount          Int
+  currency        String   @default("TRY")
+  status          String   @default("pending")
+  metadata        String?  @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order           Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+}
+
+model StripeWebhookEvent {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  stripeEventId   String   @unique
+  stripeEventType String
+  status          String   @default("processing")
+  stripeSessionId String?
+  processedAt     DateTime?
+  attempts        Int      @default(1)
+  lastError       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([stripeEventType])
+  @@index([status])
+  @@index([stripeSessionId])
+}
+
+model ApiAuditLog {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  requestId String
+  route     String
+  method    String
+  ip        String?
+  userAgent String?
+  level     AuditLevel @default(info)
+  event     String
+  message   String?
+  userId    String?
+  details   Json?
+  createdAt DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([level])
+  @@index([event])
+  @@index([requestId])
+  @@index([userId])
+  @@index([ip])
+}

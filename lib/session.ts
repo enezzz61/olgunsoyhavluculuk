@@ -1,0 +1,162 @@
+import { cookies } from "next/headers";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import type { UserRole } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { isDbUnavailableError } from "@/lib/db-fallback";
+
+const SESSION_COOKIE = "olgunsoy_session";
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+
+type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  isAdmin: boolean;
+};
+
+type SessionTokenPayload = {
+  user: SessionUser;
+  expiresAt: number;
+};
+
+function getSessionSecret() {
+  const sessionSecret = process.env.SESSION_SECRET?.trim();
+  if (sessionSecret) {
+    return sessionSecret;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET must be set in production.");
+  }
+
+  return "dev-session-secret-change-me";
+}
+
+function toBase64Url(value: string) {
+  return Buffer.from(value, "utf8").toString("base64url");
+}
+
+function fromBase64Url(value: string) {
+  return Buffer.from(value, "base64url").toString("utf8");
+}
+
+function signPayload(payload: string) {
+  return createHmac("sha256", getSessionSecret()).update(payload).digest("base64url");
+}
+
+function createSessionToken(user: SessionUser) {
+  const expiresAt = Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS;
+  const payload = JSON.stringify({ user, expiresAt } satisfies SessionTokenPayload);
+  const encodedPayload = toBase64Url(payload);
+  const signature = signPayload(encodedPayload);
+  return `${encodedPayload}.${signature}`;
+}
+
+function parseSessionToken(token: string): SessionUser | null {
+  const [encodedPayload, signature] = token.split(".");
+  if (!encodedPayload || !signature) {
+    return null;
+  }
+
+  const expectedSignature = signPayload(encodedPayload);
+  const provided = Buffer.from(signature, "utf8");
+  const expected = Buffer.from(expectedSignature, "utf8");
+
+  if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+    return null;
+  }
+
+  const payload = fromBase64Url(encodedPayload);
+  try {
+    const parsed = JSON.parse(payload) as SessionTokenPayload;
+    if (!parsed.user?.id || !parsed.user?.email || !parsed.user?.name) {
+      return null;
+    }
+
+    if (!Number.isFinite(parsed.expiresAt) || parsed.expiresAt <= Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+
+    return parsed.user;
+  } catch {
+    const [userId, expiresAtRaw, isAdminRaw] = payload.split(".");
+    const expiresAt = Number(expiresAtRaw);
+
+    if (!userId || !Number.isFinite(expiresAt)) {
+      return null;
+    }
+
+    if (expiresAt <= Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+
+    return {
+      id: userId,
+      name: userId,
+      email: "",
+      role: "perakende",
+      isAdmin: isAdminRaw === "1",
+    };
+  }
+}
+
+export async function getSessionUser() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  const parsed = parseSessionToken(token);
+  if (!parsed) {
+    return null;
+  }
+
+  try {
+    return await prisma.user.findUnique({
+      where: { id: parsed.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isAdmin: true,
+      },
+    });
+  } catch (error) {
+    if (isDbUnavailableError(error)) {
+      return parsed;
+    }
+
+    throw error;
+  }
+}
+
+export async function setSessionCookie(user: SessionUser) {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, createSessionToken(user), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  });
+}
+
+export async function clearSessionCookie() {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+}
+
+export async function requireAdmin() {
+  const user = await getSessionUser();
+  return Boolean(user?.isAdmin);
+}

@@ -1,0 +1,241 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useState } from "react";
+import { AppToast } from "@/components/app-toast";
+import { useStore } from "@/components/store-provider";
+
+type AuthPageProps = {
+  mode: "user" | "admin";
+  title: string;
+  kicker: string;
+  description: string;
+  defaultNext: string;
+  ctaHref: string;
+  ctaLabel: string;
+  alternateHref: string;
+  alternateLabel: string;
+  demoTitle: string;
+  demoLines: string[];
+};
+
+type LoginErrors = {
+  email?: string;
+  password?: string;
+};
+
+function getSafeNext(rawNext: string, defaultNext: string) {
+  if (rawNext.startsWith("/") && !rawNext.startsWith("//")) {
+    return rawNext;
+  }
+
+  return defaultNext;
+}
+
+export function AuthPage({
+  mode,
+  title,
+  kicker,
+  description,
+  defaultNext,
+  ctaHref,
+  ctaLabel,
+  alternateHref,
+  alternateLabel,
+  demoTitle,
+  demoLines,
+}: AuthPageProps) {
+  const { user, login, logout } = useStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawNext = searchParams.get("next") || "";
+  const safeNext = getSafeNext(rawNext, defaultNext);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<LoginErrors>({});
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (isSubmitting) {
+      return;
+    }
+
+    const nextErrors: LoginErrors = {};
+
+    if (!email.includes("@")) {
+      nextErrors.email = "Gecerli bir e-posta girin.";
+    }
+
+    if (password.length < 6) {
+      nextErrors.password = "Sifre en az 6 karakter olmali.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      setMessageType("error");
+      setMessage("Lutfen formdaki hatalari duzeltin.");
+      return;
+    }
+
+    setErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const result = await login(email, password, mode);
+      setMessageType(result.ok ? "success" : "error");
+
+      if (!result.ok) {
+        setMessage(result.message);
+        return;
+      }
+
+      if (mode === "admin" && !result.user?.isAdmin) {
+        await logout();
+        setMessageType("error");
+        setMessage("Bu sayfa sadece admin hesabina acik.");
+        return;
+      }
+
+      setMessage(result.message);
+      router.push(safeNext);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (user) {
+    const isAdmin = user.isAdmin;
+
+    if (mode === "admin" && !isAdmin) {
+      return (
+        <section className="page-shell">
+          <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
+            <article className="panel space-y-3">
+              <p className="hero-kicker">{kicker}</p>
+              <h1 className="section-title">Bu sayfa sadece admin icin</h1>
+              <p className="section-sub">Normal hesapla admin girisine devam edemezsin.</p>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/hesap/giris" className="btn btn-primary">
+                  Normal girise don
+                </Link>
+                <Link href={alternateHref} className="btn btn-secondary">
+                  {alternateLabel}
+                </Link>
+              </div>
+            </article>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="page-shell">
+        <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
+          <article className="panel space-y-3">
+            <p className="hero-kicker">{kicker}</p>
+            <h1 className="section-title">{isAdmin && mode === "admin" ? "Admin oturumu aktif" : "Zaten giris yaptin"}</h1>
+            <p className="section-sub">
+              {isAdmin && mode === "admin"
+                ? "Admin paneline dogrudan devam edebilirsin."
+                : "Hesabina devam etmek icin asagidan ilerleyebilirsin."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link href={safeNext} className="btn btn-primary">
+                Devam Et
+              </Link>
+              <Link href={alternateHref} className="btn btn-secondary">
+                {alternateLabel}
+              </Link>
+            </div>
+          </article>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="page-shell">
+      <div className="mx-auto w-full max-w-4xl px-4 py-10 md:px-8">
+        <div className="panel mx-auto max-w-xl space-y-4">
+          <p className="hero-kicker">{kicker}</p>
+          <h1 className="section-title">{title}</h1>
+          <p className="section-sub">{description}</p>
+
+          <form className="space-y-3" onSubmit={onSubmit}>
+            <input
+              className={`input ${errors.email ? "input-error" : ""}`}
+              placeholder="E-posta"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) {
+                  setErrors((prev) => ({ ...prev, email: undefined }));
+                }
+              }}
+              aria-invalid={Boolean(errors.email)}
+              disabled={isSubmitting}
+              required
+            />
+            {errors.email ? <p className="form-error">{errors.email}</p> : null}
+            <input
+              className={`input ${errors.password ? "input-error" : ""}`}
+              placeholder="Sifre"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password) {
+                  setErrors((prev) => ({ ...prev, password: undefined }));
+                }
+              }}
+              aria-invalid={Boolean(errors.password)}
+              disabled={isSubmitting}
+              required
+            />
+            {errors.password ? <p className="form-error">{errors.password}</p> : null}
+            <button
+              type="button"
+              className="menu-chip"
+              onClick={() => setShowPassword((prev) => !prev)}
+              disabled={isSubmitting}
+            >
+              {showPassword ? "Sifreyi Gizle" : "Sifreyi Goster"}
+            </button>
+            <button className="btn btn-primary w-full" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Giris yapiliyor..." : "Giris Yap"}
+            </button>
+          </form>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            <p className="font-semibold">{demoTitle}</p>
+            {demoLines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+
+          <p className="section-sub">
+            {mode === "admin" ? (
+              <Link href={ctaHref} className="font-semibold text-slate-800">
+                {ctaLabel}
+              </Link>
+            ) : (
+              <>
+                Hesabin yok mu?{" "}
+                <Link href={ctaHref} className="font-semibold text-slate-800">
+                  {ctaLabel}
+                </Link>
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+      <AppToast message={message} type={messageType} onClose={() => setMessage("")} />
+    </section>
+  );
+}
