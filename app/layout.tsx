@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     template: "%s | Olgunsoy Havluculuk",
   },
   description: "Toptanci ve perakende havlu alisveris platformu",
+  referrer: "origin-when-cross-origin",
   keywords: [
     "havlu",
     "toptan havlu",
@@ -32,9 +33,25 @@ export const metadata: Metadata = {
     "banyo havlusu",
     "Olgunsoy Havluculuk",
   ],
+  category: "shopping",
+  creator: "Olgunsoy Havluculuk",
+  publisher: "Olgunsoy Havluculuk",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  authors: [{ name: "Olgunsoy Havluculuk" }],
   applicationName: "Olgunsoy Havluculuk",
+  icons: {
+    icon: [{ url: "/logo.jpg" }],
+    apple: [{ url: "/logo.jpg" }],
+  },
   alternates: {
     canonical: "/",
+    languages: {
+      "tr-TR": "/",
+    },
   },
   openGraph: {
     type: "website",
@@ -45,9 +62,9 @@ export const metadata: Metadata = {
     url: "/",
     images: [
       {
-        url: absoluteUrl("/logo.png"),
-        width: 512,
-        height: 512,
+        url: absoluteUrl("/logo.jpg"),
+        width: 1200,
+        height: 630,
         alt: "Olgunsoy Havluculuk",
       },
     ],
@@ -56,7 +73,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Olgunsoy Havluculuk",
     description: "Toptanci ve perakende havlu alisveris platformu",
-    images: [absoluteUrl("/logo.png")],
+    images: [absoluteUrl("/logo.jpg")],
   },
   robots: {
     index: true,
@@ -69,6 +86,10 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+    yandex: process.env.YANDEX_VERIFICATION,
+  },
 };
 
 export default function RootLayout({
@@ -76,12 +97,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteUrl = getSiteUrl();
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Olgunsoy Havluculuk",
+    url: siteUrl,
+    logo: absoluteUrl("/logo.jpg"),
+    sameAs: [],
+  };
+
   return (
     <html
       lang="tr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
         <StoreProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>

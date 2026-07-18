@@ -7,6 +7,7 @@ import { LegalDocumentTrigger } from "@/components/legal-document-trigger";
 export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const paymentBadge = { src: "/payments/footer.png", alt: "Desteklenen odeme yontemleri" };
 
   async function submitNewsletter(e: FormEvent) {
     e.preventDefault();
@@ -78,6 +79,25 @@ export function SiteFooter() {
             </button>
           </form>
           {message ? <p className="mt-2 text-xs text-cyan-100">{message}</p> : null}
+        </div>
+      </div>
+
+      <div className="border-t border-white/20">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-8">
+          <p className="text-xs text-white/70">Odemeniz SSL ve PCI-DSS uyumlu guvenli altyapi ile korunur.</p>
+          <div className="w-full overflow-x-auto md:w-auto" aria-label="Desteklenen odeme yontemleri">
+            <div className="flex min-w-max items-center pb-1 md:justify-end">
+              <img
+                src={paymentBadge.src}
+                alt={paymentBadge.alt}
+                width={250}
+                height={36}
+                loading="lazy"
+                className="h-8 w-auto"
+                style={{ animation: "rise-up 0.3s ease both" }}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </footer>

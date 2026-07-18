@@ -72,6 +72,8 @@ export function isDbUnavailableError(error: unknown) {
 
   return (
     message.includes("prismaclientinitializationerror") ||
+    message.includes("environment variable not found: database_url") ||
+    message.includes("database_url") ||
     message.includes("error creating a database connection") ||
     message.includes("dns resolution") ||
     message.includes("can't reach database server") ||
