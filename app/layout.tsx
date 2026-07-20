@@ -44,7 +44,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Olgunsoy Havluculuk" }],
   applicationName: "Olgunsoy Havluculuk",
   icons: {
-    icon: [{ url: "/logo.jpg" }],
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo.jpg", type: "image/jpeg" },
+    ],
     apple: [{ url: "/logo.jpg" }],
   },
   alternates: {

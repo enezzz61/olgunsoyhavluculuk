@@ -3,14 +3,14 @@ import Link from "next/link";
 import { legalDocuments } from "@/lib/legal-documents";
 
 export const metadata: Metadata = {
-  title: "Yasal Sozlesmeler",
-  description: "KVKK, gizlilik, cerez, mesafeli satis, on bilgilendirme ve iade politikasi metinleri.",
+  title: "Yasal Sözleşmeler",
+  description: "KVKK, gizlilik, çerez, mesafeli satış, ön bilgilendirme ve iade politikası metinleri.",
   alternates: {
     canonical: "/yasal",
   },
   openGraph: {
-    title: "Yasal Sozlesmeler",
-    description: "Olgunsoy Havluculuk yasal metinleri ve sozlesmeler.",
+    title: "Yasal Sözleşmeler",
+    description: "Olgunsoy Havluculuk yasal metinleri ve sözleşmeler.",
     url: "/yasal",
   },
 };
@@ -21,9 +21,9 @@ export default function LegalDocumentsPage() {
       <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-8">
         <div className="panel space-y-3">
           <p className="hero-kicker">Yasal Bilgilendirme</p>
-          <h1 className="section-title">Sozlesmeler ve Politikalar</h1>
+          <h1 className="section-title">Sözleşmeler ve Politikalar</h1>
           <p className="section-sub">
-            Alisveris oncesi ve sonrasi tum sureclerde gecerli sozlesme ve politikalari bu sayfadan inceleyebilirsiniz.
+            Alışveriş öncesi ve sonrası tüm süreçlerde geçerli sözleşme ve politikaları bu sayfadan inceleyebilirsiniz.
           </p>
         </div>
 
@@ -34,9 +34,9 @@ export default function LegalDocumentsPage() {
                 <h2 className="text-xl font-semibold text-slate-800">{document.title}</h2>
                 <p className="mt-1 text-sm text-slate-600">{document.summary}</p>
               </div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Son guncelleme: {document.updatedAt}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Son güncelleme: {document.updatedAt}</p>
               <Link href={`/yasal/${document.slug}`} className="btn btn-secondary">
-                Metni Goruntule
+                Metni Görüntüle
               </Link>
             </article>
           ))}

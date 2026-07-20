@@ -3,10 +3,10 @@ import { absoluteUrl } from "@/lib/seo";
 export default function PaymentHead() {
   return (
     <>
-      <title>Odeme | Olgunsoy Havluculuk</title>
+      <title>Ödeme | Olgunsoy Havluculuk</title>
       <meta
         name="description"
-        content="Siparis odeme adimlari sadece giris yapan kullanicilar icindir."
+        content="Sipariş ödeme adımları sadece giriş yapan kullanıcılar içindir."
       />
       <meta name="robots" content="noindex, nofollow" />
       <link rel="canonical" href={absoluteUrl("/odeme")} />

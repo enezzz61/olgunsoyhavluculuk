@@ -45,12 +45,12 @@ export default function CartPage() {
     <section className="page-shell">
       <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-10 md:grid-cols-[1fr_320px] md:px-8">
         <div className="panel space-y-4">
-          <p className="hero-kicker">Akilli Sepet</p>
+          <p className="hero-kicker">Akıllı Sepet</p>
           <h1 className="section-title">Sepetim</h1>
 
           {!lines.length ? (
             <p className="section-sub">
-              Sepetiniz bos. <Link href="/urunler">Urunlere don</Link>
+              Sepetiniz boş. <Link href="/urunler">Ürünlere dön</Link>
             </p>
           ) : null}
 

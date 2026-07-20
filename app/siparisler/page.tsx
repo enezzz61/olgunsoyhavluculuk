@@ -13,9 +13,9 @@ export default function OrdersPage() {
       <section className="page-shell">
         <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
           <article className="panel">
-            <h1 className="section-title">Siparislerim</h1>
+            <h1 className="section-title">Siparişlerim</h1>
             <p className="section-sub">
-              Bu sayfayi gormek icin once <Link href="/hesap/giris?next=%2Fsiparisler">giris yapmalisin</Link>.
+              Bu sayfayı görmek için önce <Link href="/hesap/giris?next=%2Fsiparisler">giriş yapmalısın</Link>.
             </p>
           </article>
         </div>
@@ -28,13 +28,13 @@ export default function OrdersPage() {
   return (
     <section className="page-shell">
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-10 md:px-8">
-        <h1 className="section-title">Siparislerim</h1>
+        <h1 className="section-title">Siparişlerim</h1>
 
         {!myOrders.length ? (
           <article className="panel">
-            <p className="section-sub">Henuz siparisiniz bulunmuyor.</p>
+            <p className="section-sub">Henüz siparişiniz bulunmuyor.</p>
             <Link href="/urunler" className="btn btn-primary mt-3">
-              Alisverise Basla
+              Alışverişe Başla
             </Link>
           </article>
         ) : null}
@@ -42,7 +42,7 @@ export default function OrdersPage() {
         {myOrders.map((order) => (
           <article key={order.id} className="panel space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-semibold">Siparis No: {order.id}</p>
+              <p className="font-semibold">Sipariş No: {order.id}</p>
               <div className="flex items-center gap-2">
                 <span className={orderStatusClass(order.status)}>
                   {orderStatusLabel[order.status]}
@@ -52,11 +52,11 @@ export default function OrdersPage() {
                 </p>
               </div>
             </div>
-            <p className="section-sub">Kargo Firmasi: {order.cargoCompany || "-"}</p>
+            <p className="section-sub">Kargo Firması: {order.cargoCompany || "-"}</p>
             <p className="section-sub">Takip Kodu: {order.trackingCode || "-"}</p>
             {order.trackingCode ? (
               <p className="section-sub">
-                Takip icin <Link href={`/kargo-takip`}>Kargo Takip</Link> ekranina kodu gir.
+                Takip için <Link href={`/kargo-takip`}>Kargo Takip</Link> ekranına kodu gir.
               </p>
             ) : null}
             <ul className="space-y-1 text-sm text-slate-700">

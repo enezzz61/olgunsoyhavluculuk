@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { ProductsPage } from "@/components/products-page";
 
 export const metadata: Metadata = {
-  title: "Urunler",
-  description: "Perakende ve toptanci fiyatlariyla Olgunsoy Havluculuk urun katalogu.",
+  title: "Ürünler",
+  description: "Perakende ve toptancı fiyatlarıyla Olgunsoy Havluculuk ürün kataloğu.",
   alternates: {
     canonical: "/urunler",
   },
   openGraph: {
-    title: "Olgunsoy Urun Katalogu",
-    description: "Kategori bazli filtreleme ile havlu urunlerini incele, sepete ekle ve hizli alisveris yap.",
+    title: "Olgunsoy Ürün Kataloğu",
+    description: "Kategori bazlı filtreleme ile havlu ürünlerini incele, sepete ekle ve hızlı alışveriş yap.",
     url: "/urunler",
   },
 };

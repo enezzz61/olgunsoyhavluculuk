@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const ip = forwardedFor.split(",")[0]?.trim() || "unknown";
 
     if (!name || !email || password.length < 6) {
-      return apiError(context, 400, "VALIDATION_ERROR", "Gecerli bilgiler giriniz.");
+      return apiError(context, 400, "VALIDATION_ERROR", "Geçerli bilgiler giriniz.");
     }
 
     // Check rate limits with timeout
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         context,
         429,
         "RATE_LIMITED",
-        "Cok fazla deneme yapildi. Lutfen daha sonra tekrar deneyin.",
+        "Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.",
         {
           headers: {
             "Retry-After": String(retryAfterSeconds),
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
         if (canUseMockData()) {
           existing = findMockUserByEmail(email);
         } else {
-          return apiError(context, 503, "DB_UNAVAILABLE", "Veritabani baglantisi hazir degil. Daha sonra tekrar deneyin.");
+          return apiError(context, 503, "DB_UNAVAILABLE", "Veritabanı bağlantısı hazır değil. Daha sonra tekrar deneyin.");
         }
       } else {
         console.error("Unexpected error checking user:", error);

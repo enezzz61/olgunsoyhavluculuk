@@ -7,7 +7,7 @@ import { LegalDocumentTrigger } from "@/components/legal-document-trigger";
 export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const paymentBadge = { src: "/payments/footer.png", alt: "Desteklenen odeme yontemleri" };
+  const paymentBadge = { src: "/payments/footer.png", alt: "Desteklenen ödeme yöntemleri" };
 
   async function submitNewsletter(e: FormEvent) {
     e.preventDefault();
@@ -32,39 +32,40 @@ export function SiteFooter() {
       <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-10 text-sm md:grid-cols-4 md:px-8">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/90">Olgunsoy Havluculuk</p>
-          <p className="mt-2 text-white/80">Toptanci ve perakende havlu operasyonunu dijitalde hizlandiran modern siparis platformu.</p>
-          <p className="mt-3 text-xs text-white/60">Kampanya, yeni urun ve sezonluk teklif duyurulari e-posta ile iletilir.</p>
+          <p className="mt-2 text-white/80">Toptancı ve perakende havlu operasyonunu dijitalde hızlandıran modern sipariş platformu.</p>
+          <p className="mt-3 text-xs text-white/60">Kampanya, yeni ürün ve sezonluk teklif duyuruları e-posta ile iletilir.</p>
         </div>
 
         <div>
-          <p className="font-semibold">Menuler</p>
+          <p className="font-semibold">Menüler</p>
           <div className="mt-2 flex flex-col gap-1 text-white/80">
             <Link href="/">Ana Sayfa</Link>
-            <Link href="/urunler">Urunler</Link>
-            <Link href="/hesap/giris">Giris Yap</Link>
-            <Link href="/hesap/kayit">Kayit Ol</Link>
+            <Link href="/urunler">Ürünler</Link>
+            <Link href="/hakkimizda">Hakkımızda</Link>
+            <Link href="/hesap/giris">Giriş Yap</Link>
+            <Link href="/hesap/kayit">Kayıt Ol</Link>
             <Link href="/kargo-takip">Kargo Takip</Link>
             <LegalDocumentTrigger
-              label="Yasal Sozlesmeler"
+              label="Yasal Sözleşmeler"
               className="text-left"
             />
           </div>
         </div>
 
         <div>
-          <p className="font-semibold">Iletisim</p>
-          <p className="mt-2 text-white/75">Toptan satis, otel projeleri ve ozel uretim talepleri icin bize ulasabilirsiniz.</p>
+          <p className="font-semibold">İletişim</p>
+          <p className="mt-2 text-white/75">Toptan satış, otel projeleri ve özel üretim talepleri için bize ulaşabilirsiniz.</p>
           <p className="mt-2 text-white/75">E-posta: destek@olgunsoy.com</p>
           <div className="mt-3 flex flex-col gap-1 text-xs text-cyan-100/90">
-            <LegalDocumentTrigger label="KVKK Aydinlatma Metni" slug="kvkk-aydinlatma-metni" className="text-left" />
-            <LegalDocumentTrigger label="Gizlilik Politikasi" slug="gizlilik-politikasi" className="text-left" />
-            <LegalDocumentTrigger label="Cerez Politikasi" slug="cerez-politikasi" className="text-left" />
-            <LegalDocumentTrigger label="Mesafeli Satis Sozlesmesi" slug="mesafeli-satis-sozlesmesi" className="text-left" />
+            <LegalDocumentTrigger label="KVKK Aydınlatma Metni" slug="kvkk-aydinlatma-metni" className="text-left" />
+            <LegalDocumentTrigger label="Gizlilik Politikası" slug="gizlilik-politikasi" className="text-left" />
+            <LegalDocumentTrigger label="Çerez Politikası" slug="cerez-politikasi" className="text-left" />
+            <LegalDocumentTrigger label="Mesafeli Satış Sözleşmesi" slug="mesafeli-satis-sozlesmesi" className="text-left" />
           </div>
         </div>
 
         <div>
-          <p className="font-semibold">Bulten ve Kampanya</p>
+          <p className="font-semibold">Bülten ve Kampanya</p>
           <form onSubmit={submitNewsletter} className="mt-2 space-y-2">
             <input
               className="input"
@@ -75,7 +76,7 @@ export function SiteFooter() {
               required
             />
             <button className="btn btn-primary w-full" type="submit">
-              Bultene Katil
+              Bültene Katıl
             </button>
           </form>
           {message ? <p className="mt-2 text-xs text-cyan-100">{message}</p> : null}
@@ -84,8 +85,8 @@ export function SiteFooter() {
 
       <div className="border-t border-white/20">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-8">
-          <p className="text-xs text-white/70">Odemeniz SSL ve PCI-DSS uyumlu guvenli altyapi ile korunur.</p>
-          <div className="w-full overflow-x-auto md:w-auto" aria-label="Desteklenen odeme yontemleri">
+          <p className="text-xs text-white/70">Ödemeniz SSL ve PCI-DSS uyumlu güvenli altyapı ile korunur.</p>
+          <div className="w-full overflow-x-auto md:w-auto" aria-label="Desteklenen ödeme yöntemleri">
             <div className="flex min-w-max items-center pb-1 md:justify-end">
               <img
                 src={paymentBadge.src}

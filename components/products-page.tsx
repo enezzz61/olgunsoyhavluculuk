@@ -10,7 +10,7 @@ import { getStockCountLabel, getStockStatusClass, getStockStatusLabel, isOutOfSt
 
 export function ProductsPage() {
   const { user, addToCart, products } = useStore();
-  const [category, setCategory] = useState<string>("Tum");
+  const [category, setCategory] = useState<string>("Tüm");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"onerilen" | "fiyat_artan" | "fiyat_azalan" | "ad_az" | "ad_za">("onerilen");
   const [page, setPage] = useState(1);
@@ -19,14 +19,14 @@ export function ProductsPage() {
   const role = user?.role ?? "perakende";
 
   const categories = useMemo(
-    () => ["Tum", ...Array.from(new Set(products.map((item) => item.category)))],
+    () => ["Tüm", ...Array.from(new Set(products.map((item) => item.category)))],
     [products],
   );
 
   const visible = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase("tr-TR");
     const filtered = products.filter((item) => {
-      const byCategory = category === "Tum" ? true : item.category === category;
+      const byCategory = category === "Tüm" ? true : item.category === category;
       const bySearch =
         !normalizedQuery ||
         item.name.toLocaleLowerCase("tr-TR").includes(normalizedQuery) ||
@@ -75,10 +75,10 @@ export function ProductsPage() {
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 md:px-8">
         <div className="panel">
           <p className="hero-kicker">Olgunsoy Koleksiyon</p>
-          <h1 className="section-title">Havlu Katalogu</h1>
+          <h1 className="section-title">Havlu Kataloğu</h1>
           <p className="section-sub">
-            Fiyatlar aktif role gore gosterilir. Giris yaptiginda toptanci veya perakende
-            modu otomatik uygulanir.
+            Fiyatlar aktif role göre gösterilir. Giriş yaptığında toptancı veya perakende
+            modu otomatik uygulanır.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {categories.map((item) => (

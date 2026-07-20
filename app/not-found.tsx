@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Sayfa Bulunamadi",
-  description: "Aradiginiz sayfa bulunamadi. Kataloga veya ana sayfaya donerek gezinmeye devam edebilirsiniz.",
+  title: "Sayfa Bulunamadı",
+  description: "Aradığınız sayfa bulunamadı. Kataloğa veya ana sayfaya dönerek gezinmeye devam edebilirsiniz.",
   robots: {
     index: false,
     follow: false,
@@ -16,16 +16,16 @@ export default function NotFoundPage() {
       <div className="mx-auto w-full max-w-3xl px-4 py-16 md:px-8">
         <div className="panel text-center space-y-5">
           <p className="hero-kicker">404</p>
-          <h1 className="section-title">Sayfa bulunamadi</h1>
+          <h1 className="section-title">Sayfa bulunamadı</h1>
           <p className="section-sub">
-            Aradiginiz icerik tasinmis, kaldirilmis veya hatali bir baglanti ile acilmis olabilir.
+            Aradığınız içerik taşınmış, kaldırılmış veya hatalı bir bağlantı ile açılmış olabilir.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link href="/" className="btn btn-primary">
-              Ana Sayfaya Don
+              Ana Sayfaya Dön
             </Link>
             <Link href="/urunler" className="btn btn-secondary">
-              Urunleri Incele
+              Ürünleri İncele
             </Link>
             <Link href="/kargo-takip" className="btn btn-secondary">
               Kargo Takip

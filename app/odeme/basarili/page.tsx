@@ -10,7 +10,7 @@ function PaymentSuccessContent() {
   const sessionId = params.get("session_id") || params.get("token") || "";
   const { confirmPayment } = useStore();
   const [message, setMessage] = useState(
-    sessionId ? "Odeme dogrulaniyor..." : "Gecerli odeme oturumu bulunamadi.",
+    sessionId ? "Ödeme doğrulanıyor..." : "Geçerli ödeme oturumu bulunamadı.",
   );
   const [ok, setOk] = useState(false);
 
@@ -37,14 +37,14 @@ function PaymentSuccessContent() {
     <section className="page-shell">
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
         <article className="panel space-y-4">
-          <h1 className="section-title">Odeme Sonucu</h1>
+          <h1 className="section-title">Ödeme Sonucu</h1>
           <p className={ok ? "text-emerald-700" : "text-amber-700"}>{message}</p>
           <div className="flex gap-3">
             <Link href="/siparisler" className="btn btn-primary">
-              Siparislerime Git
+              Siparişlerime Git
             </Link>
             <Link href="/urunler" className="btn btn-secondary">
-              Alisverise Don
+              Alışverişe Dön
             </Link>
           </div>
         </article>
@@ -60,8 +60,8 @@ export default function PaymentSuccessPage() {
         <section className="page-shell">
           <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
             <article className="panel space-y-4">
-              <h1 className="section-title">Odeme Sonucu</h1>
-              <p className="text-slate-700">Odeme dogrulaniyor...</p>
+              <h1 className="section-title">Ödeme Sonucu</h1>
+              <p className="text-slate-700">Ödeme doğrulanıyor...</p>
             </article>
           </div>
         </section>

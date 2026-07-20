@@ -51,7 +51,7 @@ export default function CargoTrackingPage() {
     };
 
     if (!response.ok || !data.ok || !data.order) {
-      setMessage(data.message || "Takip bilgisi bulunamadi.");
+      setMessage(data.message || "Takip bilgisi bulunamadı.");
       return;
     }
 
@@ -63,7 +63,7 @@ export default function CargoTrackingPage() {
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-10 md:px-8">
         <article className="panel space-y-4">
           <h1 className="section-title">Kargo Takip</h1>
-          <p className="section-sub">Admin tarafindan paylasilan takip kodu ile siparis durumunu sorgula.</p>
+          <p className="section-sub">Admin tarafından paylaşılan takip kodu ile sipariş durumunu sorgula.</p>
           <form className="flex flex-col gap-3 md:flex-row" onSubmit={onSearch}>
             <input
               className="input"

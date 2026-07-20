@@ -6,7 +6,7 @@ export default function TrackingHead() {
       <title>Kargo Takip | Olgunsoy Havluculuk</title>
       <meta
         name="description"
-        content="Takip kodunu girerek siparisinin kargo durumunu ve hareketlerini sorgula."
+        content="Takip kodunu girerek siparişinin kargo durumunu ve hareketlerini sorgula."
       />
       <link rel="canonical" href={absoluteUrl("/kargo-takip")} />
     </>

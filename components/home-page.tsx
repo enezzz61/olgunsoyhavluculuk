@@ -18,10 +18,10 @@ export function HomePage() {
       products.slice(0, 4).map((item, index) => ({
         id: item.id,
         title: item.name,
-        subtitle: `${item.category} koleksiyonunda yeni sezon secimi`,
+        subtitle: `${item.category} koleksiyonunda yeni sezon seçimi`,
         image: item.image,
         href: `/urunler/${item.id}`,
-        badge: index === 0 ? "Mega Firsat" : index === 1 ? "Cok Satan" : "Sezona Ozel",
+        badge: index === 0 ? "Mega Fırsat" : index === 1 ? "Çok Satan" : "Sezona Özel",
       })),
     [products],
   );
@@ -74,9 +74,9 @@ export function HomePage() {
   }, []);
 
   const metrics = [
-    { label: "Aktif Urun", value: `${products.length}+` },
-    { label: "Toptanci Musteri", value: wholesaleCustomerCount === null ? "-" : String(wholesaleCustomerCount) },
-    { label: "Perakende Musteri", value: retailCustomerCount === null ? "-" : String(retailCustomerCount) },
+    { label: "Aktif Ürün", value: `${products.length}+` },
+    { label: "Toptancı Müşteri", value: wholesaleCustomerCount === null ? "-" : String(wholesaleCustomerCount) },
+    { label: "Perakende Müşteri", value: retailCustomerCount === null ? "-" : String(retailCustomerCount) },
   ];
 
   const categories = Array.from(new Set(products.map((item) => item.category))).slice(0, 8);
@@ -84,20 +84,20 @@ export function HomePage() {
   return (
     <section className="home-shell">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-8 md:py-12">
-        <div className="home-news-ticker" aria-label="Kampanya duyurulari">
+        <div className="home-news-ticker" aria-label="Kampanya duyurusu">
           <div className="home-news-track">
-            <span>1000 TL VE UZERI SIPARISLERDE KARGO UCRETSIZ</span>
-            <span>YENI KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
-            <span>ANLIK DUYURULAR ICIN BU BANDI TAKIP ET</span>
-            <span>1000 TL VE UZERI SIPARISLERDE KARGO UCRETSIZ</span>
-            <span>YENI KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
-            <span>ANLIK DUYURULAR ICIN BU BANDI TAKIP ET</span>
+            <span>1000 TL VE ÜZİRİ SİPARİŞLERDE KARGO ÜCRETSIZ</span>
+            <span>YENİ KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
+            <span>ANLIK DUYURULAR İÇİN BU BANDI TAKIP ET</span>
+            <span>1000 TL VE ÜZİRİ SİPARİŞLERDE KARGO ÜCRETSIZ</span>
+            <span>YENİ KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
+            <span>ANLIK DUYURULAR İÇİN BU BANDI TAKIP ET</span>
           </div>
         </div>
 
         <div className="home-top-menu">
           <div className="home-chip-row">
-            <Link href="/urunler" className="menu-chip">Tum Urunler</Link>
+            <Link href="/urunler" className="menu-chip">Tüm Ürünler</Link>
             {categories.map((category) => (
               <Link key={category} href="/urunler" className="menu-chip">
                 {category}
@@ -128,7 +128,7 @@ export function HomePage() {
                       Detaya Git
                     </Link>
                     <Link href="/urunler" className="btn btn-secondary">
-                      Katalogu Ac
+                      Kataloğu Aç
                     </Link>
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export function HomePage() {
             ) : (
               <div className="home-slider-content">
                 <p className="hero-kicker">Olgunsoy Havluculuk</p>
-                <h1 className="hero-title">Stok yukleniyor...</h1>
+                <h1 className="hero-title">Stok yükleniyor...</h1>
               </div>
             )}
           </article>

@@ -92,7 +92,7 @@ export async function generateMetadata({
 
   if (!product || !product.active) {
     return {
-      title: "Urun Bulunamadi",
+      title: "Ürün Bulunamadı",
       robots: {
         index: false,
         follow: false,

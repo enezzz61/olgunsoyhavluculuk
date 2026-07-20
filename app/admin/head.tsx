@@ -6,7 +6,7 @@ export default function AdminHead() {
       <title>Admin Paneli | Olgunsoy Havluculuk</title>
       <meta
         name="description"
-        content="Urunler, siparisler ve denetim kayitlari icin yonetim paneli."
+        content="Ürünler, siparişler ve denetim kayıtları için yönetim paneli."
       />
       <meta name="robots" content="noindex, nofollow" />
       <link rel="canonical" href={absoluteUrl("/admin")} />

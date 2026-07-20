@@ -8,9 +8,9 @@ export default function LoginPage() {
         <section className="page-shell">
           <div className="mx-auto w-full max-w-4xl px-4 py-10 md:px-8">
             <div className="panel mx-auto max-w-xl space-y-4">
-              <p className="hero-kicker">Hos Geldin</p>
-              <h1 className="section-title">Giris Yap</h1>
-              <p className="section-sub">Sayfa yukleniyor...</p>
+              <p className="hero-kicker">Hoş Geldiniz</p>
+              <h1 className="section-title">Giriş Yap</h1>
+              <p className="section-sub">Sayfa yükleniyor...</p>
             </div>
           </div>
         </section>
@@ -18,18 +18,18 @@ export default function LoginPage() {
     >
       <AuthPage
         mode="user"
-        title="Giris Yap"
-        kicker="Hos Geldin"
-        description="Hesabina giris yaparak sepetini ve siparislerini yonet."
+        title="Giriş Yap"
+        kicker="Hoş Geldiniz"
+        description="Hesabına giriş yaparak sepetini ve siparişlerini yönet."
         defaultNext="/hesap"
         ctaHref="/hesap/kayit"
-        ctaLabel="Kayit ol"
+        ctaLabel="Kayıt ol"
         alternateHref="/siparisler"
-        alternateLabel="Siparislerim"
+        alternateLabel="Siparişlerim"
         demoTitle="Demo Hesaplar"
         demoLines={[
           "Perakende: perakende@olgunsoy.com / 123456",
-          "Toptanci: toptanci@olgunsoy.com / 123456",
+          "Toptancı: toptanci@olgunsoy.com / 123456",
         ]}
       />
     </Suspense>

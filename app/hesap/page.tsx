@@ -33,22 +33,22 @@ export default function AccountPage() {
     const nextErrors: ProfileErrors = {};
 
     if (!name.trim() && !newPassword.trim()) {
-      nextErrors.name = "Ad guncellemek icin bir deger girin.";
-      nextErrors.newPassword = "Sifre guncellemek icin yeni sifre girin.";
+      nextErrors.name = "Ad güncellemek için bir değer girin.";
+      nextErrors.newPassword = "Şifre güncellemek için yeni şifre girin.";
     }
 
     if (newPassword && newPassword.length < 6) {
-      nextErrors.newPassword = "Yeni sifre en az 6 karakter olmali.";
+      nextErrors.newPassword = "Yeni şifre en az 6 karakter olmalı.";
     }
 
     if (newPassword && !currentPassword) {
-      nextErrors.currentPassword = "Sifre degisimi icin mevcut sifre gerekli.";
+      nextErrors.currentPassword = "Şifre değişimi için mevcut şifre gerekli.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setMessageType("error");
-      setMessage("Lutfen formdaki hatalari duzeltin.");
+      setMessage("Lütfen formdaki hataları düzeltin.");
       return;
     }
 
@@ -79,7 +79,7 @@ export default function AccountPage() {
       <section className="page-shell">
         <div className="mx-auto grid w-full max-w-4xl gap-6 px-4 py-10 md:grid-cols-2 md:px-8">
           <article className="panel space-y-2">
-            <h1 className="section-title">Hesabim</h1>
+            <h1 className="section-title">Hesabım</h1>
             <p>
               <strong>Ad:</strong> {user.name}
             </p>
@@ -91,7 +91,7 @@ export default function AccountPage() {
             </p>
             <div className="flex gap-3 pt-2">
               <Link href="/siparisler" className="btn btn-primary">
-                Siparislerim
+                Siparişlerim
               </Link>
               <button
                 className="btn btn-secondary"
@@ -99,13 +99,13 @@ export default function AccountPage() {
                   void logout();
                 }}
               >
-                Cikis Yap
+                Çıkış Yap
               </button>
             </div>
           </article>
 
           <article className="panel space-y-3">
-            <h2 className="text-xl font-semibold">Profil Bilgilerini Guncelle</h2>
+            <h2 className="text-xl font-semibold">Profil Bilgilerini Güncelle</h2>
             <form className="space-y-3" onSubmit={onUpdateProfile}>
               <input
                 className={`input ${errors.name ? "input-error" : ""}`}
@@ -124,7 +124,7 @@ export default function AccountPage() {
               <input
                 className={`input ${errors.currentPassword ? "input-error" : ""}`}
                 type={showCurrentPassword ? "text" : "password"}
-                placeholder="Mevcut sifre (sifre degisimi icin)"
+                placeholder="Mevcut şifre (şifre değişimi için)"
                 value={currentPassword}
                 onChange={(e) => {
                   setCurrentPassword(e.target.value);
@@ -142,13 +142,13 @@ export default function AccountPage() {
                 onClick={() => setShowCurrentPassword((prev) => !prev)}
                 disabled={isSubmitting}
               >
-                {showCurrentPassword ? "Mevcut sifreyi gizle" : "Mevcut sifreyi goster"}
+                {showCurrentPassword ? "Mevcut şifreyi gizle" : "Mevcut şifreyi göster"}
               </button>
 
               <input
                 className={`input ${errors.newPassword ? "input-error" : ""}`}
                 type={showNewPassword ? "text" : "password"}
-                placeholder="Yeni sifre"
+                placeholder="Yeni şifre"
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value);
@@ -167,11 +167,11 @@ export default function AccountPage() {
                 onClick={() => setShowNewPassword((prev) => !prev)}
                 disabled={isSubmitting}
               >
-                {showNewPassword ? "Yeni sifreyi gizle" : "Yeni sifreyi goster"}
+                {showNewPassword ? "Yeni şifreyi gizle" : "Yeni şifreyi göster"}
               </button>
 
               <button className="btn btn-primary w-full" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Guncelleniyor..." : "Profili Guncelle"}
+                {isSubmitting ? "Güncelleniyor..." : "Profili Güncelle"}
               </button>
             </form>
 
@@ -192,19 +192,19 @@ export default function AccountPage() {
     <section className="page-shell">
       <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-10 md:grid-cols-2 md:px-8">
         <article className="panel space-y-3">
-          <p className="hero-kicker">Hesap Islem Merkezi</p>
-          <h1 className="section-title">Giris veya Kayit</h1>
-          <p className="section-sub">Devam etmek icin uygun islemi sec. Sayfalar ayrildi ve mobilde daha sade bir deneyim sunuyor.</p>
+          <p className="hero-kicker">Hesap İşlem Merkezi</p>
+          <h1 className="section-title">Giriş veya Kayıt</h1>
+          <p className="section-sub">Devam etmek için uygun işlemi seç. Sayfalar ayrıldı ve mobilde daha sade bir deneyim sunuyor.</p>
           <div className="flex flex-wrap gap-2 pt-2">
-            <Link href="/hesap/giris" className="btn btn-secondary">Giris Yap</Link>
-            <Link href="/hesap/kayit" className="btn btn-primary">Kayit Ol</Link>
+            <Link href="/hesap/giris" className="btn btn-secondary">Giriş Yap</Link>
+            <Link href="/hesap/kayit" className="btn btn-primary">Kayıt Ol</Link>
           </div>
         </article>
 
         <article className="panel space-y-2">
-          <h2 className="text-xl font-semibold">Demo Giris Bilgileri</h2>
+          <h2 className="text-xl font-semibold">Demo Giriş Bilgileri</h2>
           <p className="section-sub">Perakende: perakende@olgunsoy.com / 123456</p>
-          <p className="section-sub">Toptanci: toptanci@olgunsoy.com / 123456</p>
+          <p className="section-sub">Toptancı: toptanci@olgunsoy.com / 123456</p>
         </article>
       </div>
     </section>

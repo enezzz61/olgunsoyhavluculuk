@@ -6,7 +6,7 @@ export default function CartHead() {
       <title>Sepetim | Olgunsoy Havluculuk</title>
       <meta
         name="description"
-        content="Sepetindeki urunleri kontrol et, miktarlari guncelle ve odeme adimina gec."
+        content="Sepetindeki ürünleri kontrol et, miktarları güncelle ve ödeme adımına geç."
       />
       <meta name="robots" content="noindex, nofollow" />
       <link rel="canonical" href={absoluteUrl("/sepet")} />

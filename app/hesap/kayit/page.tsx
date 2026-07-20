@@ -41,25 +41,25 @@ function RegisterContent() {
     const nextErrors: RegisterErrors = {};
 
     if (name.trim().length < 2) {
-      nextErrors.name = "Ad Soyad en az 2 karakter olmali.";
+      nextErrors.name = "Ad Soyad en az 2 karakter olmalı.";
     }
 
     if (!email.includes("@")) {
-      nextErrors.email = "Gecerli bir e-posta girin.";
+      nextErrors.email = "Geçerli bir e-posta girin.";
     }
 
     if (password.length < 6) {
-      nextErrors.password = "Sifre en az 6 karakter olmali.";
+      nextErrors.password = "Şifre en az 6 karakter olmalı.";
     }
 
     if (!acceptedPolicies) {
-      nextErrors.policies = "Kayit icin yasal metinleri onaylaman gerekir.";
+      nextErrors.policies = "Kayıt için yasal metinleri onaylaman gerekir.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setMessageType("error");
-      setMessage("Lutfen formdaki hatalari duzeltin.");
+      setMessage("Lütfen formdaki hataları düzeltin.");
       return;
     }
 
@@ -85,11 +85,11 @@ function RegisterContent() {
         <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
           <article className="panel space-y-3">
             <p className="hero-kicker">Oturum Aktif</p>
-            <h1 className="section-title">Hesabin hazir</h1>
-            <p className="section-sub">Kayit tamamlandi. Hesap ekranindan devam edebilirsin.</p>
+            <h1 className="section-title">Hesabın hazır</h1>
+            <p className="section-sub">Kayıt tamamlandı. Hesap ekranından devam edebilirsin.</p>
             <div className="flex flex-wrap gap-2">
               <Link href={safeNext} className="btn btn-primary">Devam Et</Link>
-              <Link href="/urunler" className="btn btn-secondary">Alisverise Don</Link>
+              <Link href="/urunler" className="btn btn-secondary">Alışverişe Dön</Link>
             </div>
           </article>
         </div>
@@ -101,9 +101,9 @@ function RegisterContent() {
     <section className="page-shell">
       <div className="mx-auto w-full max-w-4xl px-4 py-10 md:px-8">
         <div className="panel mx-auto max-w-xl space-y-4">
-          <p className="hero-kicker">Yeni Musteri</p>
-          <h1 className="section-title">Kayit Ol</h1>
-          <p className="section-sub">Rolunu sec, hesabini olustur ve fiyatlarini buna gore gor.</p>
+          <p className="hero-kicker">Yeni Müşteri</p>
+          <h1 className="section-title">Kayıt Ol</h1>
+          <p className="section-sub">Rolünü seç, hesabını oluştur ve fiyatlarını buna göre gör.</p>
 
           <form className="space-y-3" onSubmit={onSubmit}>
             <input
@@ -139,7 +139,7 @@ function RegisterContent() {
             {errors.email ? <p className="form-error">{errors.email}</p> : null}
             <input
               className={`input ${errors.password ? "input-error" : ""}`}
-              placeholder="Sifre"
+              placeholder="Şifre"
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => {
@@ -160,7 +160,7 @@ function RegisterContent() {
               onClick={() => setShowPassword((prev) => !prev)}
               disabled={isSubmitting}
             >
-              {showPassword ? "Sifreyi Gizle" : "Sifreyi Goster"}
+              {showPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}
             </button>
             <select
               className="input"
@@ -169,7 +169,7 @@ function RegisterContent() {
               disabled={isSubmitting}
             >
               <option value="perakende">Perakende</option>
-              <option value="toptanci">Toptanci</option>
+              <option value="toptanci">Toptancı</option>
             </select>
 
             <label className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
@@ -186,21 +186,21 @@ function RegisterContent() {
                 disabled={isSubmitting}
               />
               <span>
-                <LegalDocumentTrigger label="KVKK Aydinlatma Metni" slug="kvkk-aydinlatma-metni" className="font-semibold text-slate-800 underline" />, {" "}
-                <LegalDocumentTrigger label="Gizlilik Politikasi" slug="gizlilik-politikasi" className="font-semibold text-slate-800 underline" /> ve {" "}
-                <LegalDocumentTrigger label="Kullanim Kosullari" slug="kullanim-kosullari" className="font-semibold text-slate-800 underline" />
-                &apos;ni okudum, onayliyorum.
+                <LegalDocumentTrigger label="KVKK Aydınlatma Metni" slug="kvkk-aydinlatma-metni" className="font-semibold text-slate-800 underline" />, {" "}
+                <LegalDocumentTrigger label="Gizlilik Politikası" slug="gizlilik-politikasi" className="font-semibold text-slate-800 underline" /> ve {" "}
+                <LegalDocumentTrigger label="Kullanım Koşulları" slug="kullanim-kosullari" className="font-semibold text-slate-800 underline" />
+                &apos;ni okudum, onaylıyorum.
               </span>
             </label>
             {errors.policies ? <p className="form-error">{errors.policies}</p> : null}
 
             <button className="btn btn-primary w-full" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Kayit olusturuluyor..." : "Kayit Ol"}
+              {isSubmitting ? "Kayıt oluşturulu yor..." : "Kayıt Ol"}
             </button>
           </form>
 
           <p className="section-sub">
-            Zaten hesabin var mi? <Link href={`/hesap/giris?next=${encodeURIComponent(safeNext)}`} className="font-semibold text-slate-800">Giris yap</Link>
+            Zaten hesabın var mı? <Link href={`/hesap/giris?next=${encodeURIComponent(safeNext)}`} className="font-semibold text-slate-800">Giriş yap</Link>
           </p>
         </div>
       </div>
@@ -216,9 +216,9 @@ export default function RegisterPage() {
         <section className="page-shell">
           <div className="mx-auto w-full max-w-4xl px-4 py-10 md:px-8">
             <div className="panel mx-auto max-w-xl space-y-4">
-              <p className="hero-kicker">Yeni Musteri</p>
-              <h1 className="section-title">Kayit Ol</h1>
-              <p className="section-sub">Sayfa yukleniyor...</p>
+              <p className="hero-kicker">Yeni Müşteri</p>
+              <h1 className="section-title">Kayıt Ol</h1>
+              <p className="section-sub">Sayfa yükleniyor...</p>
             </div>
           </div>
         </section>

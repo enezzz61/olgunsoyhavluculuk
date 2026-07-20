@@ -68,17 +68,17 @@ export function AuthPage({
     const nextErrors: LoginErrors = {};
 
     if (!email.includes("@")) {
-      nextErrors.email = "Gecerli bir e-posta girin.";
+      nextErrors.email = "Geçerli bir e-posta girin.";
     }
 
     if (password.length < 6) {
-      nextErrors.password = "Sifre en az 6 karakter olmali.";
+      nextErrors.password = "Şifre en az 6 karakter olmalı.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setMessageType("error");
-      setMessage("Lutfen formdaki hatalari duzeltin.");
+      setMessage("Lütfen formdaki hatları düzeltin.");
       return;
     }
 
@@ -97,7 +97,7 @@ export function AuthPage({
       if (mode === "admin" && !result.user?.isAdmin) {
         await logout();
         setMessageType("error");
-        setMessage("Bu sayfa sadece admin hesabina acik.");
+        setMessage("Bu sayfa sadece admin hesabına açık.");
         return;
       }
 
@@ -117,11 +117,11 @@ export function AuthPage({
           <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
             <article className="panel space-y-3">
               <p className="hero-kicker">{kicker}</p>
-              <h1 className="section-title">Bu sayfa sadece admin icin</h1>
-              <p className="section-sub">Normal hesapla admin girisine devam edemezsin.</p>
+              <h1 className="section-title">Bu sayfa sadece admin için</h1>
+              <p className="section-sub">Normal hesapla admin girişine devam edemezsin.</p>
               <div className="flex flex-wrap gap-2">
                 <Link href="/hesap/giris" className="btn btn-primary">
-                  Normal girise don
+                  Normal girişe dön
                 </Link>
                 <Link href={alternateHref} className="btn btn-secondary">
                   {alternateLabel}
@@ -138,11 +138,11 @@ export function AuthPage({
         <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
           <article className="panel space-y-3">
             <p className="hero-kicker">{kicker}</p>
-            <h1 className="section-title">{isAdmin && mode === "admin" ? "Admin oturumu aktif" : "Zaten giris yaptin"}</h1>
+            <h1 className="section-title">{isAdmin && mode === "admin" ? "Admin oturumu aktif" : "Zaten giriş yaptın"}</h1>
             <p className="section-sub">
               {isAdmin && mode === "admin"
-                ? "Admin paneline dogrudan devam edebilirsin."
-                : "Hesabina devam etmek icin asagidan ilerleyebilirsin."}
+                ? "Admin paneline doğrudan devam edebilirsin."
+                : "Hesabına devam etmek için aşağıdan ilerleyebilirsin."}
             </p>
             <div className="flex flex-wrap gap-2">
               <Link href={safeNext} className="btn btn-primary">
@@ -185,7 +185,7 @@ export function AuthPage({
             {errors.email ? <p className="form-error">{errors.email}</p> : null}
             <input
               className={`input ${errors.password ? "input-error" : ""}`}
-              placeholder="Sifre"
+              placeholder="Şifre"
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => {

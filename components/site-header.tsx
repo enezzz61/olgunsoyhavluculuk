@@ -8,10 +8,10 @@ import { useStore } from "@/components/store-provider";
 
 const links = [
   { href: "/", label: "Ana Sayfa" },
-  { href: "/urunler", label: "Urunler" },
+  { href: "/urunler", label: "Ürünler" },
   { href: "/kargo-takip", label: "Kargo Takip" },
   { href: "/sepet", label: "Sepet" },
-  { href: "/hesap", label: "Hesabim" },
+  { href: "/hesap", label: "Hesabım" },
 ];
 
 export function SiteHeader() {
@@ -60,7 +60,7 @@ export function SiteHeader() {
 
   return (
     <header className="site-header" ref={headerRootRef}>
-      <div className="top-note-marquee" aria-label="Gelistirme duyurusu">
+      <div className="top-note-marquee" aria-label="Geliştirme duyurusu">
         <p className="top-note-static">SİTE HALA GELİŞTİRİLME AŞAMASINDADIR</p>
       </div>
       <div className="header-main mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 md:px-8">
@@ -73,7 +73,7 @@ export function SiteHeader() {
           className={`menu-toggle mobile-only-toggle ml-auto ${mobileMenuOpen ? "menu-toggle-open" : ""}`}
           aria-controls="main-navigation"
           aria-expanded={mobileMenuOpen}
-          aria-label={mobileMenuOpen ? "Menuyu kapat" : "Menuyu ac"}
+          aria-label={mobileMenuOpen ? "Menüyü kapat" : "Menüyü aç"}
           onClick={() => setMobileMenuOpen((prev) => !prev)}
         >
           <span className="menu-toggle-bars" aria-hidden="true">
