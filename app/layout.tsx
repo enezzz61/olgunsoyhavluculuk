@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     url: "/",
     images: [
       {
-        url: absoluteUrl("/logo.jpg"),
+        url: absoluteUrl("/favicon.ico.jpg"),
         width: 1200,
         height: 630,
         alt: "Olgunsoy Havluculuk",
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Olgunsoy Havluculuk",
     description: "Toptanci ve perakende havlu alisveris platformu",
-    images: [absoluteUrl("/logo.jpg")],
+    images: [absoluteUrl("/favicon.ico.jpg")],
   },
   robots: {
     index: true,
@@ -106,7 +106,7 @@ export default function RootLayout({
     "@type": "Organization",
     name: "Olgunsoy Havluculuk",
     url: siteUrl,
-    logo: absoluteUrl("/logo.jpg"),
+    logo: absoluteUrl("/favicon.ico.jpg"),
     sameAs: [],
   };
 
