@@ -23,6 +23,23 @@ function buildResetLink(token: string, purpose: PasswordResetPurpose) {
   return `${baseUrl}/sifremi-unuttum?token=${encodeURIComponent(token)}&purpose=${purpose}`;
 }
 
+function getSmtpTransportOptions() {
+  const host = process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
+  const port = Number(process.env.SMTP_PORT?.trim() || "465");
+  const secure = (process.env.SMTP_SECURE?.trim() || "true").toLowerCase() === "true";
+
+  return {
+    host,
+    port: Number.isFinite(port) ? port : 465,
+    secure,
+    requireTLS: true,
+    auth: {
+      user: process.env.SMTP_USER?.trim(),
+      pass: process.env.SMTP_PASS?.trim(),
+    },
+  };
+}
+
 async function sendResetEmail(email: string, name: string, link: string) {
   const smtpUser = process.env.SMTP_USER?.trim();
   const smtpPass = process.env.SMTP_PASS?.trim();
@@ -34,13 +51,7 @@ async function sendResetEmail(email: string, name: string, link: string) {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
+    const transporter = nodemailer.createTransport(getSmtpTransportOptions());
 
     await transporter.sendMail({
       from: fromEmail,
@@ -58,8 +69,12 @@ async function sendResetEmail(email: string, name: string, link: string) {
 
     return { ok: true, message: "E-posta gönderildi." };
   } catch (error) {
+    const message = error instanceof Error ? error.message : "E-posta gönderilemedi.";
     console.error("[password-reset] SMTP send failed", error);
-    return { ok: false, message: error instanceof Error ? error.message : "E-posta gönderilemedi." };
+    return {
+      ok: false,
+      message: `${message} (Gmail için SMTP_PASS bir uygulama şifresi olmalı; normal hesabın parolası değil.)`,
+    };
   }
 }
 
