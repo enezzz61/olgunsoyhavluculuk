@@ -24,38 +24,43 @@ function buildResetLink(token: string, purpose: PasswordResetPurpose) {
 }
 
 async function sendResetEmail(email: string, name: string, link: string) {
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  const fromEmail = process.env.NEWSLETTER_FROM_EMAIL || smtpUser;
+  const smtpUser = process.env.SMTP_USER?.trim();
+  const smtpPass = process.env.SMTP_PASS?.trim();
+  const fromEmail = process.env.NEWSLETTER_FROM_EMAIL?.trim() || smtpUser;
 
   if (!smtpUser || !smtpPass) {
     console.warn("[password-reset] SMTP credentials not configured");
-    return false;
+    return { ok: false, message: "SMTP ayarları eksik; e-posta gönderilemedi." };
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
 
-  await transporter.sendMail({
-    from: fromEmail,
-    to: email,
-    subject: "Olgunsoy Şifre Sıfırlama İsteği",
-    html: `
-      <h2>Şifre Sıfırlama</h2>
-      <p>Merhaba ${name},</p>
-      <p>Şifreni sıfırlamak için aşağıdaki bağlantıya tıklayabilirsin.</p>
-      <p><a href="${link}">${link}</a></p>
-      <p>Bu bağlantı kısa süreliğine geçerlidir.</p>
-      <p>Saygılarımızla,<br/>Olgunsoy Takımı</p>
-    `,
-  });
+    await transporter.sendMail({
+      from: fromEmail,
+      to: email,
+      subject: "Olgunsoy Şifre Sıfırlama İsteği",
+      html: `
+        <h2>Şifre Sıfırlama</h2>
+        <p>Merhaba ${name},</p>
+        <p>Şifreni sıfırlamak için aşağıdaki bağlantıya tıklayabilirsin.</p>
+        <p><a href="${link}">${link}</a></p>
+        <p>Bu bağlantı kısa süreliğine geçerlidir.</p>
+        <p>Saygılarımızla,<br/>Olgunsoy Takımı</p>
+      `,
+    });
 
-  return true;
+    return { ok: true, message: "E-posta gönderildi." };
+  } catch (error) {
+    console.error("[password-reset] SMTP send failed", error);
+    return { ok: false, message: error instanceof Error ? error.message : "E-posta gönderilemedi." };
+  }
 }
 
 export async function createPasswordResetRequest(email: string, purpose: PasswordResetPurpose) {
@@ -78,28 +83,36 @@ export async function createPasswordResetRequest(email: string, purpose: Passwor
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
 
-  await prisma.$runCommandRaw({
-    insert: "passwordResetTokens",
-    documents: [
-      {
-        email,
-        purpose,
-        token,
-        expiresAt: expiresAt.toISOString(),
-        used: false,
-        createdAt: new Date().toISOString(),
-      },
-    ],
-  });
+  try {
+    await prisma.$runCommandRaw({
+      insert: "passwordResetTokens",
+      documents: [
+        {
+          email,
+          purpose,
+          token,
+          expiresAt: expiresAt.toISOString(),
+          used: false,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    });
+  } catch (error) {
+    console.error("[password-reset] Token store failed", error);
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Şifre sıfırlama jetonu kaydedilemedi.",
+    };
+  }
 
   const link = buildResetLink(token, purpose);
-  const mailSent = await sendResetEmail(user.name || email, user.name || email, link);
+  const mailResult = await sendResetEmail(user.name || email, user.name || email, link);
 
   return {
     ok: true,
-    message: mailSent
+    message: mailResult.ok
       ? "Şifre sıfırlama bağlantısı e-posta ile gönderildi."
-      : "Şifre sıfırlama bağlantısı hazırlandı, ancak e-posta gönderimi yapılamadı.",
+      : `Şifre sıfırlama bağlantısı hazırlandı, ancak e-posta gönderimi başarısız oldu: ${mailResult.message}`,
   };
 }
 
@@ -115,11 +128,20 @@ export async function consumePasswordResetToken(token: string, newPassword: stri
     };
   }
 
-  const tokenDoc = (await prisma.$runCommandRaw({
-    find: "passwordResetTokens",
-    filter: { token, used: false },
-    limit: 1,
-  })) as { documents?: PasswordResetTokenRecord[] };
+  let tokenDoc;
+  try {
+    tokenDoc = (await prisma.$runCommandRaw({
+      find: "passwordResetTokens",
+      filter: { token, used: false },
+      limit: 1,
+    })) as { documents?: PasswordResetTokenRecord[] };
+  } catch (error) {
+    console.error("[password-reset] Token lookup failed", error);
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Token doğrulanamadı.",
+    };
+  }
 
   const record = tokenDoc.documents?.[0];
   if (!record) {
