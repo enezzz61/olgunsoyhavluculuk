@@ -26,8 +26,6 @@ export default function AdminLoginPage() {
         ctaLabel="Normal girise don"
         alternateHref="/admin"
         alternateLabel="Admin paneline don"
-        demoTitle="Admin Demo Hesabi"
-        demoLines={["admin@olgunsoy.com / 123456"]}
       />
     </Suspense>
   );

@@ -16,8 +16,6 @@ type AuthPageProps = {
   ctaLabel: string;
   alternateHref: string;
   alternateLabel: string;
-  demoTitle: string;
-  demoLines: string[];
 };
 
 type LoginErrors = {
@@ -43,8 +41,6 @@ export function AuthPage({
   ctaLabel,
   alternateHref,
   alternateLabel,
-  demoTitle,
-  demoLines,
 }: AuthPageProps) {
   const { user, login, logout } = useStore();
   const router = useRouter();
@@ -54,7 +50,10 @@ export function AuthPage({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
@@ -105,6 +104,43 @@ export function AuthPage({
       router.push(safeNext);
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function onResetPassword(e: FormEvent) {
+    e.preventDefault();
+    if (isResetting) {
+      return;
+    }
+
+    if (!resetEmail.includes("@")) {
+      setMessageType("error");
+      setMessage("Geçerli bir e-posta girin.");
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const response = await fetch("/api/auth/request-password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail, purpose: mode }),
+      });
+
+      const data = (await response.json()) as { ok?: boolean; message?: string };
+      setMessageType(response.ok && data.ok ? "success" : "error");
+      setMessage(data.message || "İşlem tamamlanamadı.");
+
+      if (response.ok && data.ok) {
+        setResetEmail("");
+        setShowResetForm(false);
+      }
+    } catch (error) {
+      console.error("Reset password error:", error);
+      setMessageType("error");
+      setMessage("Şifre sıfırlama isteği oluşturulamadı.");
+    } finally {
+      setIsResetting(false);
     }
   }
 
@@ -183,40 +219,64 @@ export function AuthPage({
               required
             />
             {errors.email ? <p className="form-error">{errors.email}</p> : null}
-            <input
-              className={`input ${errors.password ? "input-error" : ""}`}
-              placeholder="Şifre"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (errors.password) {
-                  setErrors((prev) => ({ ...prev, password: undefined }));
-                }
-              }}
-              aria-invalid={Boolean(errors.password)}
-              disabled={isSubmitting}
-              required
-            />
-            {errors.password ? <p className="form-error">{errors.password}</p> : null}
-            <button
-              type="button"
-              className="menu-chip"
-              onClick={() => setShowPassword((prev) => !prev)}
-              disabled={isSubmitting}
-            >
-              {showPassword ? "Sifreyi Gizle" : "Sifreyi Goster"}
-            </button>
+            <div className="space-y-2">
+              <input
+                className={`input ${errors.password ? "input-error" : ""}`}
+                placeholder="Şifre"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) {
+                    setErrors((prev) => ({ ...prev, password: undefined }));
+                  }
+                }}
+                aria-invalid={Boolean(errors.password)}
+                disabled={isSubmitting}
+                required
+              />
+              {errors.password ? <p className="form-error">{errors.password}</p> : null}
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="menu-chip"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? "Sifreyi Gizle" : "Sifreyi Goster"}
+                </button>
+              </div>
+            </div>
             <button className="btn btn-primary w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Giris yapiliyor..." : "Giris Yap"}
             </button>
           </form>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-            <p className="font-semibold">{demoTitle}</p>
-            {demoLines.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
+            <button
+              type="button"
+              className="menu-chip"
+              onClick={() => setShowResetForm((prev) => !prev)}
+            >
+              {showResetForm ? "Şifre sıfırlama formunu kapat" : "Şifremi unuttum / sıfırla"}
+            </button>
+
+            {showResetForm ? (
+              <form className="mt-3 space-y-2" onSubmit={onResetPassword}>
+                <input
+                  className="input"
+                  placeholder="Sıfırlanacak e-posta"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  disabled={isResetting}
+                  required
+                />
+                <button className="btn btn-secondary w-full" type="submit" disabled={isResetting}>
+                  {isResetting ? "Gönderiliyor..." : "Şifre Sıfırlama Linki Gönder"}
+                </button>
+              </form>
+            ) : null}
           </div>
 
           <p className="section-sub">

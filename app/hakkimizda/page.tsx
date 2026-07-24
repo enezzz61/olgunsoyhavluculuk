@@ -74,7 +74,7 @@ export default function HakkimizPage() {
             ulaşabilirsiniz.
           </p>
           <p className="text-slate-700">
-            <strong>E-posta:</strong> destek@olgunsoy.com
+            <strong>E-posta:</strong> destek@olgunsoyhavluculuk.com
           </p>
         </section>
       </div>

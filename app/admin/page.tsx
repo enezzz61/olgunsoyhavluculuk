@@ -74,6 +74,7 @@ export default function AdminPage() {
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [uploadMessage, setUploadMessage] = useState("");
+  const [homeAnnouncementText, setHomeAnnouncementText] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
 
@@ -307,6 +308,25 @@ export default function AdminPage() {
     await refreshProducts();
   }
 
+  async function saveHomeAnnouncement(e: FormEvent) {
+    e.preventDefault();
+
+    const response = await fetch("/api/admin/site-settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeAnnouncementText }),
+    });
+
+    const data = (await response.json()) as { ok?: boolean; message?: string; homeAnnouncementText?: string };
+    if (!response.ok || !data.ok) {
+      setMessage(data.message || "Duyuru kaydedilemedi.");
+      return;
+    }
+
+    setHomeAnnouncementText(data.homeAnnouncementText || "");
+    setMessage(data.message || "Duyuru güncellendi.");
+  }
+
   async function removeProduct(id: string) {
     const response = await fetch("/api/admin/products", {
       method: "DELETE",
@@ -385,6 +405,18 @@ export default function AdminPage() {
             </article>
           </div>
         ) : null}
+
+        <form className="panel space-y-3" onSubmit={saveHomeAnnouncement}>
+          <h2 className="section-title">Ana Sayfa Duyurusu</h2>
+          <p className="section-sub">Bu metin anasayfadaki üst kampanya bandında görünür.</p>
+          <input
+            className="input"
+            placeholder="Örnek: 1000 TL ve üzeri siparişlerde kargo ücretsiz"
+            value={homeAnnouncementText}
+            onChange={(e) => setHomeAnnouncementText(e.target.value)}
+          />
+          <button className="btn btn-primary" type="submit">Duyuruyu Kaydet</button>
+        </form>
 
         <form className="panel grid gap-3 md:grid-cols-2" onSubmit={createProduct}>
           <h2 className="section-title md:col-span-2">Yeni Urun Ekle</h2>

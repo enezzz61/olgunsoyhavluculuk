@@ -173,3 +173,11 @@ model ApiAuditLog {
   @@index([userId])
   @@index([ip])
 }
+
+model SiteSetting {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  key                   String   @unique
+  value                 String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}

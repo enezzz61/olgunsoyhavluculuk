@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/components/store-provider";
 import { formatTry } from "@/lib/money";
+import { getDefaultHomeAnnouncementText, normalizeHomeAnnouncementText } from "@/lib/site-settings";
 import { getStockCountLabel, getStockStatusClass, getStockStatusLabel } from "@/lib/stock";
 
 export function HomePage() {
@@ -12,6 +13,7 @@ export function HomePage() {
   const role = user?.role ?? "perakende";
   const [wholesaleCustomerCount, setWholesaleCustomerCount] = useState<number | null>(null);
   const [retailCustomerCount, setRetailCustomerCount] = useState<number | null>(null);
+  const [homeAnnouncementText, setHomeAnnouncementText] = useState<string>(getDefaultHomeAnnouncementText());
   const spotlight = products.slice(0, 6);
   const slides = useMemo(
     () =>
@@ -42,6 +44,23 @@ export function HomePage() {
 
   useEffect(() => {
     let active = true;
+
+    fetch("/api/admin/site-settings", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { homeAnnouncementText?: string };
+        if (active) {
+          setHomeAnnouncementText(normalizeHomeAnnouncementText(data.homeAnnouncementText));
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setHomeAnnouncementText(getDefaultHomeAnnouncementText());
+        }
+      });
 
     fetch("/api/public/metrics", { cache: "no-store" })
       .then(async (response) => {
@@ -86,10 +105,10 @@ export function HomePage() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-8 md:py-12">
         <div className="home-news-ticker" aria-label="Kampanya duyurusu">
           <div className="home-news-track">
-            <span>1000 TL VE ÜZİRİ SİPARİŞLERDE KARGO ÜCRETSIZ</span>
+            <span>{homeAnnouncementText}</span>
             <span>YENİ KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
             <span>ANLIK DUYURULAR İÇİN BU BANDI TAKIP ET</span>
-            <span>1000 TL VE ÜZİRİ SİPARİŞLERDE KARGO ÜCRETSIZ</span>
+            <span>{homeAnnouncementText}</span>
             <span>YENİ KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
             <span>ANLIK DUYURULAR İÇİN BU BANDI TAKIP ET</span>
           </div>
@@ -222,7 +241,7 @@ export function HomePage() {
                 )}
               </div>
               <Link href={`/urunler/${item.id}`} className="btn btn-secondary mt-2">
-                Detaya Git
+                Ürüne Git
               </Link>
             </article>
           ))}

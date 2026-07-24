@@ -4,6 +4,7 @@ import { getSessionUser, setSessionCookie } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiEvent } from "@/lib/api-observability";
 import { canUseMockData, isDbUnavailableError } from "@/lib/db-fallback";
 import { findMockUserById, updateMockUser } from "@/lib/mock-auth";
+import { validatePassword } from "@/lib/password-rules";
 
 export async function PATCH(request: Request) {
   const context = getRequestContext(request, "/api/auth/profile");
@@ -14,10 +15,11 @@ export async function PATCH(request: Request) {
 
   const body = await request.json();
   const name = String(body.name || "").trim();
+  const email = String(body.email || "").trim();
   const currentPassword = String(body.currentPassword || "").trim();
   const newPassword = String(body.newPassword || "").trim();
 
-  if (!name && !newPassword) {
+  if (!name && !email && !newPassword) {
     return apiError(context, 400, "VALIDATION_ERROR", "Guncellenecek en az bir alan gerekli.");
   }
 
@@ -42,8 +44,9 @@ export async function PATCH(request: Request) {
       }
 
       if (newPassword) {
-        if (newPassword.length < 6) {
-          return apiError(context, 400, "VALIDATION_ERROR", "Yeni sifre en az 6 karakter olmali.");
+        const passwordValidation = validatePassword(newPassword);
+        if (!passwordValidation.isValid) {
+          return apiError(context, 400, "VALIDATION_ERROR", passwordValidation.errors.join(" "));
         }
 
         if (!currentPassword) {
@@ -100,8 +103,9 @@ export async function PATCH(request: Request) {
   }
 
   if (newPassword) {
-    if (newPassword.length < 6) {
-      return apiError(context, 400, "VALIDATION_ERROR", "Yeni sifre en az 6 karakter olmali.");
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      return apiError(context, 400, "VALIDATION_ERROR", passwordValidation.errors.join(" "));
     }
 
     if (!currentPassword) {
@@ -116,11 +120,16 @@ export async function PATCH(request: Request) {
 
   const data: {
     name?: string;
+    email?: string;
     password?: string;
   } = {};
 
   if (name) {
     data.name = name;
+  }
+
+  if (email) {
+    data.email = email;
   }
 
   if (newPassword) {
@@ -143,6 +152,7 @@ export async function PATCH(request: Request) {
     userId: updated.id,
     changedPassword: Boolean(newPassword),
     changedName: Boolean(name),
+    changedEmail: Boolean(email),
   });
 
   return apiJson(context, {

@@ -625,6 +625,11 @@ a {
   border-radius: 0.7rem;
   padding: 0.68rem 0.78rem;
   background: #fff;
+  color: #0f172a;
+}
+
+.input::placeholder {
+  color: #64748b;
 }
 
 .input:focus {

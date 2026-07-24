@@ -6,6 +6,7 @@ import { setSessionCookie } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiEvent } from "@/lib/api-observability";
 import { canUseMockData, isDbUnavailableError } from "@/lib/db-fallback";
 import { createMockUser, findMockUserByEmail } from "@/lib/mock-auth";
+import { validatePassword } from "@/lib/password-rules";
 
 export async function POST(request: Request) {
   const context = getRequestContext(request, "/api/auth/register");
@@ -18,8 +19,13 @@ export async function POST(request: Request) {
     const forwardedFor = request.headers.get("x-forwarded-for") || "";
     const ip = forwardedFor.split(",")[0]?.trim() || "unknown";
 
-    if (!name || !email || password.length < 6) {
+    if (!name || !email) {
       return apiError(context, 400, "VALIDATION_ERROR", "Geçerli bilgiler giriniz.");
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return apiError(context, 400, "VALIDATION_ERROR", passwordValidation.errors.join(" "));
     }
 
     // Check rate limits with timeout

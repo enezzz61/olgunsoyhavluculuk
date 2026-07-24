@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { StoreProvider } from "@/components/store-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { CookieConsent } from "@/components/cookie-consent";
+import { isDatabaseConfigured } from "@/lib/prisma";
 import { absoluteUrl, getSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -110,6 +112,8 @@ export default function RootLayout({
     sameAs: [],
   };
 
+  const databaseReady = isDatabaseConfigured();
+
   return (
     <html
       lang="tr"
@@ -120,12 +124,40 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        <StoreProvider>
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
-          <CookieConsent />
-        </StoreProvider>
+        <Script id="iyzico-buyer-protection-inline" strategy="afterInteractive">
+          {`window.iyz = { token: '6e7cdd7e-3b6c-4226-96c7-d558ef1ea261', position: 'bottomLeft', ideaSoft: false, pwi: true };`}
+        </Script>
+        <Script
+          src="https://static.iyzipay.com/buyer-protection/buyer-protection.js"
+          strategy="afterInteractive"
+        />
+        {databaseReady ? (
+          <StoreProvider>
+            <SiteHeader />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+            <CookieConsent />
+          </StoreProvider>
+        ) : (
+          <>
+            <SiteHeader />
+            <main className="flex-1">
+              <section className="page-shell">
+                <div className="mx-auto max-w-2xl px-4 py-20 md:px-8">
+                  <div className="panel space-y-4 text-center">
+                    <p className="hero-kicker">Sistem Durumu</p>
+                    <h1 className="section-title">Bağlantı Sağlanamadı</h1>
+                    <p className="section-sub">
+                      MongoDB bağlantısı sağlanamadığı için site şu anda kullanılamıyor. Lütfen veritabanı bağlantısını kontrol edin.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </main>
+            <SiteFooter />
+            <CookieConsent />
+          </>
+        )}
       </body>
     </html>
   );

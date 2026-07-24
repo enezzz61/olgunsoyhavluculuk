@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/components/store-provider";
 import { AddressSelector } from "@/components/address-selector";
 import { AddressForm } from "@/components/address-form";
+import { resolveUnitPrice } from "@/lib/pricing";
 
 type Address = {
   id: string;
@@ -19,7 +20,7 @@ type Address = {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { user, cart } = useStore();
+  const { user, cart, products } = useStore();
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,8 +58,24 @@ export default function PaymentPage() {
     );
   }
 
-  // Cart summary will show items; total is calculated on checkout
   const itemCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+  const orderTotal = useMemo(() => {
+    if (!selectedAddress || !user) {
+      return 0;
+    }
+
+    return cart.reduce((sum, item) => {
+      const product = products.find((entry) => entry.id === item.productId);
+      if (!product) {
+        return sum;
+      }
+
+      const quantity = Math.max(1, Number(item.quantity || 1));
+      const unitPrice = resolveUnitPrice({ product, role: user.role, qty: quantity }).unitPrice;
+      return sum + unitPrice * quantity;
+    }, 0);
+  }, [cart, products, selectedAddress, user]);
 
   async function handleCheckout() {
     if (!selectedAddress) {
@@ -68,13 +85,14 @@ export default function PaymentPage() {
 
     setLoading(true);
     try {
-      // Sepeti adres bilgisi ile gönder
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           items: cart,
           shippingAddressId: selectedAddress.id,
+          paymentMethod: "credit-card",
         }),
       });
 
@@ -110,6 +128,12 @@ export default function PaymentPage() {
                 ref={addressSelectorRef}
                 onAddressSelected={setSelectedAddress} 
               />
+
+              {selectedAddress ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  Kredi kartı ile ödeme yapılacaktır.
+                </div>
+              ) : null}
 
               {!selectedAddress && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -154,7 +178,9 @@ export default function PaymentPage() {
 
               <div className="flex justify-between items-center mb-6">
                 <span className="text-lg font-bold">Toplam:</span>
-                <span className="text-2xl font-bold text-blue-600">Hesaplanıyor...</span>
+                <span className="text-2xl font-bold text-blue-600">
+                  {selectedAddress ? `${orderTotal.toFixed(2)} TL` : "Adres seçin"}
+                </span>
               </div>
 
               <button
@@ -165,8 +191,15 @@ export default function PaymentPage() {
                 {loading ? "İşleniyor..." : "Ödemeye Devam Et"}
               </button>
 
+              {selectedAddress ? (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                  <p className="font-semibold text-slate-700">Ödeme yöntemi</p>
+                  <p>Kredi Kartı</p>
+                </div>
+              ) : null}
+
               <p className="text-xs text-gray-500 mt-3 text-center">
-                Adres seçtikten sonra ödeme yapabilirsiniz
+                Önce adresi seçin, sonra ödeme işlemini başlatın.
               </p>
             </div>
           </div>

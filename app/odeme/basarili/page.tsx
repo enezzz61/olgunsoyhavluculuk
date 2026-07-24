@@ -7,7 +7,8 @@ import { useStore } from "@/components/store-provider";
 
 function PaymentSuccessContent() {
   const params = useSearchParams();
-  const sessionId = params.get("session_id") || params.get("token") || "";
+  const sessionId = params.get("session_id") || params.get("token") || params.get("conversationId") || "";
+  const paymentMethod = params.get("method") || "";
   const { confirmPayment } = useStore();
   const [message, setMessage] = useState(
     sessionId ? "Ödeme doğrulanıyor..." : "Geçerli ödeme oturumu bulunamadı.",
@@ -24,8 +25,14 @@ function PaymentSuccessContent() {
       if (!active) {
         return;
       }
-      setMessage(result.message);
+      setMessage(result.message || "Ödeme doğrulanamadı.");
       setOk(result.ok);
+    }).catch(() => {
+      if (!active) {
+        return;
+      }
+      setMessage("Ödeme doğrulama isteği başarısız oldu.");
+      setOk(false);
     });
 
     return () => {
@@ -39,6 +46,12 @@ function PaymentSuccessContent() {
         <article className="panel space-y-4">
           <h1 className="section-title">Ödeme Sonucu</h1>
           <p className={ok ? "text-emerald-700" : "text-amber-700"}>{message}</p>
+          {paymentMethod === "bank-transfer" ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              <p className="font-semibold">Havale / EFT seçildi.</p>
+              <p className="mt-1">Ödemeniz onaylandığında siparişiniz oluşturulur. Banka transfer bilgileri için destek hattımızla iletişime geçebilirsiniz.</p>
+            </div>
+          ) : null}
           <div className="flex gap-3">
             <Link href="/siparisler" className="btn btn-primary">
               Siparişlerime Git

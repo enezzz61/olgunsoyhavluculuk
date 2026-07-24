@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "create:admin": "node scripts/create-admin.mjs",
     "verify:iyzico": "node --env-file=.env scripts/verify-iyzico.mjs"
   },
   "prisma": {

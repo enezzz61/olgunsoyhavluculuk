@@ -26,11 +26,6 @@ export default function LoginPage() {
         ctaLabel="Kayıt ol"
         alternateHref="/siparisler"
         alternateLabel="Siparişlerim"
-        demoTitle="Demo Hesaplar"
-        demoLines={[
-          "Perakende: perakende@olgunsoy.com / 123456",
-          "Toptancı: toptanci@olgunsoy.com / 123456",
-        ]}
       />
     </Suspense>
   );

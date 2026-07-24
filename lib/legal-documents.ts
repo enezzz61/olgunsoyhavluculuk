@@ -22,7 +22,7 @@ export const legalDocuments: LegalDocument[] = [
         heading: "Veri Sorumlusu",
         paragraphs: [
           "Bu aydinlatma metni, veri sorumlusu sifatini haiz Olgunsoy Havluculuk tarafindan 6698 sayili Kisisel Verilerin Korunmasi Kanunu kapsaminda hazirlanmistir.",
-          "Iletisim: destek@olgunsoy.com.",
+          "Iletisim: destek@olgunsoyhavluculuk.com.",
         ],
       },
       {
@@ -48,7 +48,7 @@ export const legalDocuments: LegalDocument[] = [
         heading: "KVKK Kapsamindaki Haklar",
         paragraphs: [
           "Kanunun 11. maddesi kapsaminda veri islenip islenmedigini ogrenme, duzeltme, silme, aktarmaya itiraz etme ve zarar halinde tazmin talep etme haklarina sahipsiniz.",
-          "Hak taleplerinizi destek@olgunsoy.com adresine iletebilirsiniz.",
+          "Hak taleplerinizi destek@olgunsoyhavluculuk.com adresine iletebilirsiniz.",
         ],
       },
     ],
@@ -121,7 +121,7 @@ export const legalDocuments: LegalDocument[] = [
         heading: "Satici Bilgileri",
         paragraphs: [
           "Satici: Olgunsoy Havluculuk",
-          "Iletisim: destek@olgunsoy.com",
+          "Iletisim: destek@olgunsoyhavluculuk.com",
         ],
       },
       {

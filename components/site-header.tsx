@@ -6,10 +6,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "@/components/logo";
 import { useStore } from "@/components/store-provider";
 
-const links = [
+const guestLinks = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/urunler", label: "Ürünler" },
-  { href: "/kargo-takip", label: "Kargo Takip" },
+];
+
+const authenticatedLinks = [
+  ...guestLinks,
   { href: "/sepet", label: "Sepet" },
   { href: "/hesap", label: "Hesabım" },
 ];
@@ -23,9 +26,11 @@ export function SiteHeader() {
   const nextParam = useMemo(() => encodeURIComponent(pathname || "/"), [pathname]);
   const loginHref = `/hesap/giris?next=${nextParam}`;
   const registerHref = `/hesap/kayit?next=${nextParam}`;
-  const navLinks = user?.isAdmin
-    ? [...links, { href: "/admin", label: "Admin" }]
-    : links;
+  const navLinks = user
+    ? user.isAdmin
+      ? [...authenticatedLinks, { href: "/admin", label: "Admin" }]
+      : authenticatedLinks
+    : guestLinks;
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -84,7 +89,7 @@ export function SiteHeader() {
         </button>
 
         <nav
-          className={`header-nav order-3 w-full flex-wrap items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/70 p-2 backdrop-blur lg:order-2 lg:flex lg:w-auto ${mobileMenuOpen ? "header-nav-open" : ""}`}
+          className={`header-nav order-3 w-full flex-col items-stretch gap-2 rounded-2xl border border-slate-200/70 bg-white/70 p-2 backdrop-blur lg:order-2 lg:flex lg:w-auto lg:flex-row lg:items-center ${mobileMenuOpen ? "header-nav-open" : "hidden lg:flex"}`}
           aria-label="Ana navigasyon"
           id="main-navigation"
         >
@@ -103,12 +108,12 @@ export function SiteHeader() {
             );
           })}
           {!user && !isAuthPage ? (
-            <div className="auth-nav-links">
+            <div className="auth-nav-links flex flex-col gap-2 lg:flex-row">
               <Link href={loginHref} className="menu-chip" onClick={() => setMobileMenuOpen(false)}>
-                Giris Yap
+                Giriş Yap
               </Link>
               <Link href={registerHref} className="menu-chip menu-chip-active" onClick={() => setMobileMenuOpen(false)}>
-                Kayit Ol
+                Kayıt Ol
               </Link>
             </div>
           ) : null}

@@ -5,7 +5,9 @@ import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppToast } from "@/components/app-toast";
 import { LegalDocumentTrigger } from "@/components/legal-document-trigger";
+import { PasswordStrength } from "@/components/password-strength";
 import { useStore } from "@/components/store-provider";
+import { PASSWORD_MIN_LENGTH, validatePassword } from "@/lib/password-rules";
 import type { UserRole } from "@/lib/products";
 
 type RegisterErrors = {
@@ -32,6 +34,25 @@ function RegisterContent() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
 
+  const passwordRequirements = [
+    {
+      label: `En az ${PASSWORD_MIN_LENGTH} karakter`,
+      met: password.length >= PASSWORD_MIN_LENGTH,
+    },
+    {
+      label: "En az bir büyük harf",
+      met: /[A-Z]/.test(password),
+    },
+    {
+      label: "En az bir küçük harf",
+      met: /[a-z]/.test(password),
+    },
+    {
+      label: "En az bir rakam",
+      met: /\d/.test(password),
+    },
+  ];
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (isSubmitting) {
@@ -48,8 +69,9 @@ function RegisterContent() {
       nextErrors.email = "Geçerli bir e-posta girin.";
     }
 
-    if (password.length < 6) {
-      nextErrors.password = "Şifre en az 6 karakter olmalı.";
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      nextErrors.password = passwordValidation.errors.join(" ");
     }
 
     if (!acceptedPolicies) {
@@ -154,14 +176,30 @@ function RegisterContent() {
               minLength={6}
             />
             {errors.password ? <p className="form-error">{errors.password}</p> : null}
-            <button
-              type="button"
-              className="menu-chip"
-              onClick={() => setShowPassword((prev) => !prev)}
-              disabled={isSubmitting}
-            >
-              {showPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}
-            </button>
+            <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              <p className="font-semibold text-slate-700">Şifre koşulları</p>
+              <ul className="space-y-1 pl-0">
+                {passwordRequirements.map((item) => (
+                  <li key={item.label} className="flex items-center gap-2">
+                    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-xs ${item.met ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"}`}>
+                      {item.met ? "✓" : "•"}
+                    </span>
+                    <span className={item.met ? "text-emerald-700" : "text-slate-600"}>{item.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <PasswordStrength password={password} />
+              <button
+                type="button"
+                className="menu-chip"
+                onClick={() => setShowPassword((prev) => !prev)}
+                disabled={isSubmitting}
+              >
+                {showPassword ? "Şifreyi Gizle" : "Şifreyi Göster"}
+              </button>
+            </div>
             <select
               className="input"
               value={role}

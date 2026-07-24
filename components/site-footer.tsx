@@ -44,7 +44,6 @@ export function SiteFooter() {
             <Link href="/hakkimizda">Hakkımızda</Link>
             <Link href="/hesap/giris">Giriş Yap</Link>
             <Link href="/hesap/kayit">Kayıt Ol</Link>
-            <Link href="/kargo-takip">Kargo Takip</Link>
             <LegalDocumentTrigger
               label="Yasal Sözleşmeler"
               className="text-left"
@@ -55,7 +54,7 @@ export function SiteFooter() {
         <div>
           <p className="font-semibold">İletişim</p>
           <p className="mt-2 text-white/75">Toptan satış, otel projeleri ve özel üretim talepleri için bize ulaşabilirsiniz.</p>
-          <p className="mt-2 text-white/75">E-posta: destek@olgunsoy.com</p>
+          <p className="mt-2 text-white/75">E-posta: destek@olgunsoyhavluculuk.com</p>
           <div className="mt-3 flex flex-col gap-1 text-xs text-cyan-100/90">
             <LegalDocumentTrigger label="KVKK Aydınlatma Metni" slug="kvkk-aydinlatma-metni" className="text-left" />
             <LegalDocumentTrigger label="Gizlilik Politikası" slug="gizlilik-politikasi" className="text-left" />
@@ -68,7 +67,7 @@ export function SiteFooter() {
           <p className="font-semibold">Bülten ve Kampanya</p>
           <form onSubmit={submitNewsletter} className="mt-2 space-y-2">
             <input
-              className="input"
+              className="input text-slate-900 placeholder:text-slate-400"
               type="email"
               placeholder="E-posta adresiniz"
               value={email}

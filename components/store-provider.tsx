@@ -48,6 +48,7 @@ type LoginMode = "user" | "admin";
 
 type ProfileUpdatePayload = {
   name?: string;
+  email?: string;
   currentPassword?: string;
   newPassword?: string;
 };
@@ -64,6 +65,7 @@ type StoreContextType = {
   register: (payload: RegisterPayload) => Promise<{ ok: boolean; message: string }>;
   login: (email: string, password: string, mode: LoginMode) => Promise<{ ok: boolean; message: string; user?: AppUser }>;
   updateProfile: (payload: ProfileUpdatePayload) => Promise<{ ok: boolean; message: string }>;
+  deleteAccount: (password: string) => Promise<{ ok: boolean; message: string }>;
   logout: () => Promise<void>;
   checkout: () => Promise<{ ok: boolean; message: string; redirectUrl?: string }>;
   confirmPayment: (sessionId: string) => Promise<{ ok: boolean; message: string }>;
@@ -216,6 +218,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -241,6 +244,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, mode }),
       });
@@ -264,7 +268,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -272,10 +276,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setOrders([]);
   }, []);
 
+  const deleteAccount = useCallback(async (password: string) => {
+    try {
+      const response = await fetch("/api/auth/delete", {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      if (!response.ok) {
+        return { ok: false, message: "Hesap silinemedi." };
+      }
+
+      const data = (await response.json()) as { ok: boolean; message: string };
+      setUser(null);
+      setOrders([]);
+      setCart([]);
+      return { ok: data.ok, message: data.message };
+    } catch (error) {
+      console.error("Delete account error:", error);
+      return { ok: false, message: "Islem sirasinda hata olustu" };
+    }
+  }, []);
+
   const updateProfile = useCallback(async (payload: ProfileUpdatePayload) => {
     try {
       const response = await fetch("/api/auth/profile", {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -313,6 +342,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: cart }),
       });
@@ -349,13 +379,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const confirmPayment = useCallback(async (sessionId: string) => {
     const response = await fetch("/api/payments/confirm", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
     });
 
     const data = (await response.json()) as {
-      ok: boolean;
-      message: string;
+      ok?: boolean;
+      message?: string;
     };
 
     if (!response.ok || !data.ok) {
@@ -365,7 +396,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setCart([]);
     await refreshOrders();
 
-    return { ok: true, message: data.message };
+    return { ok: true, message: data.message || "Odeme dogrulandi." };
   }, [refreshOrders]);
 
   const cartCount = useMemo(
@@ -385,6 +416,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     register,
     login,
     updateProfile,
+    deleteAccount,
     logout,
     checkout,
     confirmPayment,
