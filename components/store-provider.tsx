@@ -223,7 +223,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        return { ok: false, message: "Kayit islemi basarisiz oldu" };
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+        return { ok: false, message: errorData.message || "Kayit islemi basarisiz oldu" };
       }
       const data = (await response.json()) as {
         ok: boolean;
@@ -249,7 +250,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password, mode }),
       });
       if (!response.ok) {
-        return { ok: false, message: "Giris basarisiz oldu" };
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+        return { ok: false, message: errorData.message || "Giris basarisiz oldu" };
       }
       const data = (await response.json()) as {
         ok: boolean;

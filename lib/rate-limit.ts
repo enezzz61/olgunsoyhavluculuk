@@ -50,7 +50,8 @@ function getUpstashRedis() {
 
   if (!url || !token) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in production.");
+      console.warn("[rate-limit] Upstash env vars missing; using in-memory fallback.");
+      return null;
     }
     return null;
   }

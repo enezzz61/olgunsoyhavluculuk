@@ -170,7 +170,8 @@ export async function POST(request: Request) {
 
     return apiJson(context, { ok: true, message: "Kayit basarili.", user });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Bilinmeyen hata";
     console.error("Register error:", error);
-    return apiError(context, 500, "INTERNAL_ERROR", "Kayit sirasinda hata olustu.");
+    return apiError(context, 500, "INTERNAL_ERROR", `Kayit sirasinda hata olustu: ${message}`);
   }
 }
