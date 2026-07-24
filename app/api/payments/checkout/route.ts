@@ -116,7 +116,16 @@ export async function POST(request: Request) {
     });
 
     const baseUrl = getBaseUrl();
-    const useMockPayment = process.env.MOCK_PAYMENTS === "true" || !isIyzicoConfigured();
+    const useMockPayment = process.env.MOCK_PAYMENTS === "true";
+
+    if (!isIyzicoConfigured() && !useMockPayment) {
+      return apiError(
+        context,
+        503,
+        "PAYMENT_PROVIDER_UNAVAILABLE",
+        "Canlı ödeme sağlayıcısı ayarlanmamış. Lütfen daha sonra tekrar deneyin.",
+      );
+    }
 
     if (paymentMethod === "bank-transfer") {
       const mockSessionId = `mock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
