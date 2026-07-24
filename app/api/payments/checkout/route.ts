@@ -3,7 +3,7 @@ import { createOrderFromPaymentSession } from "@/lib/payment-order";
 import { resolveUnitPrice } from "@/lib/pricing";
 import type { Product } from "@/lib/products";
 import { getSessionUser } from "@/lib/session";
-import { createIyzicoCheckoutForm, getBaseUrl, isIyzicoConfigured } from "@/lib/iyzico";
+import { createIyzicoCheckoutForm, getBaseUrl, getIyzicoConfigStatus, isIyzicoConfigured } from "@/lib/iyzico";
 import { apiError, apiJson, getRequestContext, logApiError, logApiEvent } from "@/lib/api-observability";
 import { canUseMockData, isDbUnavailableError, getMockProducts } from "@/lib/db-fallback";
 
@@ -119,11 +119,14 @@ export async function POST(request: Request) {
     const useMockPayment = process.env.MOCK_PAYMENTS === "true";
 
     if (!isIyzicoConfigured() && !useMockPayment) {
+      const config = getIyzicoConfigStatus();
+      const missing = config.missingKeys.length ? ` Eksik değerler: ${config.missingKeys.join(", ")}.` : "";
+
       return apiError(
         context,
         503,
         "PAYMENT_PROVIDER_UNAVAILABLE",
-        "Canlı ödeme sağlayıcısı ayarlanmamış. Lütfen daha sonra tekrar deneyin.",
+        `Canlı ödeme sağlayıcısı ayarlanmamış.${missing} Vercel'de gerekli Iyzico env değerlerini ekleyin.`,
       );
     }
 

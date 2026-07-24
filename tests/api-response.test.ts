@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readApiErrorMessage } from "../lib/api-response";
-import { normalizeIyzicoErrorMessage } from "../lib/iyzico";
+import { getIyzicoConfigStatus, normalizeIyzicoErrorMessage } from "../lib/iyzico";
 
 test("readApiErrorMessage returns the backend message when present", async () => {
   const response = new Response(JSON.stringify({ message: "API bilgileri bulunamadı" }), {
@@ -25,4 +25,17 @@ test("normalizeIyzicoErrorMessage explains missing API credentials", () => {
   const message = normalizeIyzicoErrorMessage("API bilgileri bulunamadı");
   assert.match(message, /IYZICO_API_KEY/);
   assert.match(message, /IYZICO_SECRET_KEY/);
+});
+
+test("getIyzicoConfigStatus reports the exact missing keys", () => {
+  const original = process.env;
+  process.env = { ...original, IYZICO_API_KEY: "", IYZICO_SECRET_KEY: "secret", IYZICO_BASE_URL: "https://api.iyzipay.com", IYZICO_IDENTITY_NUMBER: "12345678901" };
+
+  try {
+    const status = getIyzicoConfigStatus();
+    assert.equal(status.configured, false);
+    assert.deepEqual(status.missingKeys, ["IYZICO_API_KEY"]);
+  } finally {
+    process.env = original;
+  }
 });

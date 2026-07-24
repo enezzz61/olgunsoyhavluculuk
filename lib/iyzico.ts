@@ -42,21 +42,44 @@ export function getBaseUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
+export function getIyzicoConfigStatus() {
+  const missingKeys: string[] = [];
+
+  if (!process.env.IYZICO_API_KEY?.trim()) {
+    missingKeys.push("IYZICO_API_KEY");
+  }
+
+  if (!process.env.IYZICO_SECRET_KEY?.trim()) {
+    missingKeys.push("IYZICO_SECRET_KEY");
+  }
+
+  if (!process.env.IYZICO_BASE_URL?.trim()) {
+    missingKeys.push("IYZICO_BASE_URL");
+  }
+
+  if (!process.env.IYZICO_IDENTITY_NUMBER?.trim()) {
+    missingKeys.push("IYZICO_IDENTITY_NUMBER");
+  }
+
+  return {
+    configured: missingKeys.length === 0,
+    missingKeys,
+  };
+}
+
 export function isIyzicoConfigured() {
-  return Boolean(
-    process.env.IYZICO_API_KEY?.trim() &&
-    process.env.IYZICO_SECRET_KEY?.trim() &&
-    process.env.IYZICO_BASE_URL?.trim() &&
-    process.env.IYZICO_IDENTITY_NUMBER?.trim(),
-  );
+  return getIyzicoConfigStatus().configured;
 }
 
 function getIyzicoClient() {
   const apiKey = process.env.IYZICO_API_KEY?.trim();
   const secretKey = process.env.IYZICO_SECRET_KEY?.trim();
+  const baseUrl = process.env.IYZICO_BASE_URL?.trim();
 
-  if (!apiKey || !secretKey) {
-    throw new Error(normalizeIyzicoErrorMessage("IYZICO_API_KEY veya IYZICO_SECRET_KEY tanimli degil."));
+  if (!apiKey || !secretKey || !baseUrl) {
+    const config = getIyzicoConfigStatus();
+    const missing = config.missingKeys.join(", ");
+    throw new Error(normalizeIyzicoErrorMessage(`Iyzico API bilgileri bulunamadı. Eksik değerler: ${missing}`));
   }
 
   return {
