@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { Product, UserRole } from "@/lib/products";
+import { readApiErrorMessage } from "@/lib/api-response";
 import { loadLocal, saveLocal } from "@/lib/storage";
 
 type AppUser = {
@@ -350,7 +351,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        return { ok: false, message: "Siparis olusturulamadi." };
+        return {
+          ok: false,
+          message: await readApiErrorMessage(response, "Siparis olusturulamadi."),
+        };
       }
 
       const data = (await response.json()) as {

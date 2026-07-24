@@ -24,6 +24,20 @@ type IyzipayBasketItem = {
   price: string;
 };
 
+export function normalizeIyzicoErrorMessage(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("api bilgileri bulunamad") || normalized.includes("api bilgileri bulunamadi")) {
+    return "Iyzico API bilgileri bulunamadı. Vercel'de IYZICO_API_KEY, IYZICO_SECRET_KEY, IYZICO_BASE_URL ve IYZICO_IDENTITY_NUMBER değerlerini kontrol edin.";
+  }
+
+  if (normalized.includes("iyzico_api_key") || normalized.includes("iyzico_secret_key") || normalized.includes("iyzico_base_url")) {
+    return "Iyzico kimlik bilgileri eksik. Vercel'de IYZICO_API_KEY, IYZICO_SECRET_KEY ve IYZICO_BASE_URL değerlerini doğrulayın.";
+  }
+
+  return message;
+}
+
 export function getBaseUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
@@ -32,6 +46,7 @@ export function isIyzicoConfigured() {
   return Boolean(
     process.env.IYZICO_API_KEY?.trim() &&
     process.env.IYZICO_SECRET_KEY?.trim() &&
+    process.env.IYZICO_BASE_URL?.trim() &&
     process.env.IYZICO_IDENTITY_NUMBER?.trim(),
   );
 }
@@ -41,7 +56,7 @@ function getIyzicoClient() {
   const secretKey = process.env.IYZICO_SECRET_KEY?.trim();
 
   if (!apiKey || !secretKey) {
-    throw new Error("IYZICO_API_KEY veya IYZICO_SECRET_KEY tanimli degil.");
+    throw new Error(normalizeIyzicoErrorMessage("IYZICO_API_KEY veya IYZICO_SECRET_KEY tanimli degil."));
   }
 
   return {
@@ -104,11 +119,13 @@ async function postIyzico<T extends IyzipayResult>(path: string, payload: Record
     result = (await response.json()) as T;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Iyzico yanıtı çözülemedi: ${message}`);
+    throw new Error(`Iyzico yanıtı çözülemedi: ${normalizeIyzicoErrorMessage(message)}`);
   }
 
   if (!response.ok) {
-    const errorMessage = result?.errorMessage || result?.status || `Iyzico request failed: ${response.status}`;
+    const errorMessage = normalizeIyzicoErrorMessage(
+      result?.errorMessage || result?.status || `Iyzico request failed: ${response.status}`,
+    );
     throw new Error(`Iyzico hatası: ${errorMessage}`);
   }
 
