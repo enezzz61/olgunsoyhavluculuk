@@ -29,7 +29,11 @@ export function getBaseUrl() {
 }
 
 export function isIyzicoConfigured() {
-  return Boolean(process.env.IYZICO_API_KEY && process.env.IYZICO_SECRET_KEY);
+  return Boolean(
+    process.env.IYZICO_API_KEY?.trim() &&
+    process.env.IYZICO_SECRET_KEY?.trim() &&
+    process.env.IYZICO_IDENTITY_NUMBER?.trim(),
+  );
 }
 
 function getIyzicoClient() {
@@ -76,22 +80,36 @@ async function postIyzico<T extends IyzipayResult>(path: string, payload: Record
     body,
   });
 
-  const response = await fetch(`${client.baseUrl}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: authorization,
-      "x-iyzi-rnd": randomKey,
-      "x-iyzi-client-version": "olgunsoy-nextjs-1.0",
-    },
-    body,
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${client.baseUrl}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: authorization,
+        "x-iyzi-rnd": randomKey,
+        "x-iyzi-client-version": "olgunsoy-nextjs-1.0",
+      },
+      body,
+      cache: "no-store",
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Iyzico isteği ağ hatasıyla başarısız oldu: ${message}`);
+  }
 
-  const result = (await response.json()) as T;
+  let result: T;
+  try {
+    result = (await response.json()) as T;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Iyzico yanıtı çözülemedi: ${message}`);
+  }
+
   if (!response.ok) {
-    throw new Error(result.errorMessage || `Iyzico request failed: ${response.status}`);
+    const errorMessage = result?.errorMessage || result?.status || `Iyzico request failed: ${response.status}`;
+    throw new Error(`Iyzico hatası: ${errorMessage}`);
   }
 
   return result;
