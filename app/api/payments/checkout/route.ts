@@ -200,7 +200,7 @@ export async function POST(request: Request) {
         context,
         502,
         "PAYMENT_PROVIDER_ERROR",
-        "Ödeme sağlayıcısı hata verdi. Lütfen daha sonra tekrar deneyin.",
+        `Ödeme sağlayıcısı hata verdi: ${errorMessage}`,
       );
     }
   } catch (error) {
