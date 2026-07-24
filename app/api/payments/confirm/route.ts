@@ -20,12 +20,10 @@ export async function POST(request: Request) {
       return apiError(context, 400, "VALIDATION_ERROR", "sessionId gerekli.");
     }
 
-    if (sessionId.startsWith("mock_") && canUseMockData()) {
-      logApiEvent(context, "payment.confirm.mock_succeeded", {
-        userId: user.id,
-        sessionId,
-      });
-      return apiJson(context, { ok: true, message: "Odeme dogrulandi." });
+    const isMockSession = sessionId.startsWith("mock_");
+
+    if (isMockSession) {
+      return apiError(context, 400, "MOCK_PAYMENT_DISABLED", "Mock ödeme modu devre dışı. Gerçek ödeme sağlayıcısı kullanılmalıdır.");
     }
 
     const payment = await prisma.payment.findUnique({ where: { stripeSessionId: sessionId } });

@@ -128,72 +128,21 @@ export async function POST(request: Request) {
     }
 
     if (paymentMethod === "bank-transfer") {
-      const mockSessionId = `mock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          stripeSessionId: mockSessionId,
-          status: "paid",
-          metadata: JSON.stringify({ shippingAddressId, cart: items, paymentMethod }),
-        },
-      });
-
-      const result = await createOrderFromPaymentSession({
-        paymentReference: mockSessionId,
-        cartJson: JSON.stringify(items),
-        shippingAddressId,
-      });
-
-      if (!result.ok) {
-        logApiEvent(context, "payment.checkout.bank_transfer_failed", { userId: user.id });
-        return apiError(context, 400, "ORDER_CREATION_FAILED", result.message || "Siparis olusturulamadi.");
-      }
-
-      logApiEvent(context, "payment.checkout.bank_transfer_succeeded", {
-        userId: user.id,
-        paymentId: payment.id,
-        amount: total,
-      });
-
-      return apiJson(context, {
-        ok: true,
-        url: `${baseUrl}/odeme/basarili?session_id=${mockSessionId}&mock=1&method=bank-transfer`,
-      });
+      return apiError(
+        context,
+        400,
+        "BANK_TRANSFER_DISABLED",
+        "Banka havalesi / EFT yöntemi şu anda aktif değildir. Lütfen kredi kartı ile devam edin.",
+      );
     }
 
     if (useMockPayment) {
-      const mockSessionId = `mock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          stripeSessionId: mockSessionId,
-          status: "paid",
-        },
-      });
-
-      const result = await createOrderFromPaymentSession({
-        paymentReference: mockSessionId,
-        cartJson: JSON.stringify(items),
-        shippingAddressId,
-      });
-
-      if (!result.ok) {
-        logApiEvent(context, "payment.checkout.mock_order_failed", { userId: user.id });
-        return apiError(context, 400, "ORDER_CREATION_FAILED", result.message || "Siparis olusturulamadi.");
-      }
-
-      logApiEvent(context, "payment.checkout.mock_succeeded", {
-        userId: user.id,
-        paymentId: payment.id,
-        amount: total,
-      });
-
-      return apiJson(context, {
-        ok: true,
-        url: `${baseUrl}/odeme/basarili?session_id=${mockSessionId}&mock=1`,
-      });
+      return apiError(
+        context,
+        503,
+        "PAYMENT_PROVIDER_UNAVAILABLE",
+        "Canlı ödeme sağlayıcısı ayarlanmamış. Lütfen daha sonra tekrar deneyin.",
+      );
     }
 
     const addressText = `${shippingAddress.address}, ${shippingAddress.district}/${shippingAddress.city}`;
@@ -241,53 +190,20 @@ export async function POST(request: Request) {
       return apiJson(context, { ok: true, url: session.paymentPageUrl });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      logApiEvent(context, "payment.checkout.iyzico_failed_fallback", {
+      logApiEvent(context, "payment.checkout.iyzico_failed", {
         userId: user.id,
         paymentId: payment.id,
         error: errorMessage,
       });
 
-      const mockSessionId = `mock_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          stripeSessionId: mockSessionId,
-          status: "paid",
-          metadata: JSON.stringify({ shippingAddressId, cart: items, paymentMethod, fallbackReason: errorMessage }),
-        },
-      });
-
-      const result = await createOrderFromPaymentSession({
-        paymentReference: mockSessionId,
-        cartJson: JSON.stringify(items),
-        shippingAddressId,
-      });
-
-      if (!result.ok) {
-        logApiEvent(context, "payment.checkout.fallback_order_failed", { userId: user.id });
-        return apiError(context, 400, "ORDER_CREATION_FAILED", result.message || "Siparis olusturulamadi.");
-      }
-
-      return apiJson(context, {
-        ok: true,
-        url: `${baseUrl}/odeme/basarili?session_id=${mockSessionId}&mock=1&method=credit-card&fallback=1`,
-      });
+      return apiError(
+        context,
+        502,
+        "PAYMENT_PROVIDER_ERROR",
+        "Ödeme sağlayıcısı hata verdi. Lütfen daha sonra tekrar deneyin.",
+      );
     }
   } catch (error) {
-    if (isDbUnavailableError(error) && canUseMockData()) {
-      logApiEvent(context, "payment.checkout.mock_succeeded", {
-        userId: user?.id,
-        amount: 0,
-        source: "mock-db",
-      });
-
-      return apiJson(context, {
-        ok: true,
-        url: `${getBaseUrl()}/odeme/basarili?session_id=mock_${Date.now()}&mock=1`,
-      });
-    }
-
     const errorMessage = error instanceof Error ? error.message : "Bilinmeyen hata";
     logApiError(context, "payment.checkout.failed", error);
     return apiError(context, 500, "CHECKOUT_FAILED", `Odeme altyapisi hazir degil. Detay: ${errorMessage}`);
