@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
   const purpose = searchParams.get("purpose") || "user";
@@ -66,5 +66,13 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div className="page-shell"><div className="mx-auto w-full max-w-xl px-4 py-16 md:px-8"><div className="panel">Yükleniyor...</div></div></div>}>
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }
