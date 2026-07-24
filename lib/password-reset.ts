@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-import { prisma } from "@/lib/prisma";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
 export type PasswordResetPurpose = "admin" | "user";
 
@@ -63,6 +63,13 @@ export async function createPasswordResetRequest(email: string, purpose: Passwor
     return { ok: false, message: "Geçerli bir e-posta adresi giriniz." };
   }
 
+  if (!isDatabaseConfigured()) {
+    return {
+      ok: false,
+      message: "Şifre sıfırlama şu anda veritabanı bağlantısı olmadan kullanılamıyor.",
+    };
+  }
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     return { ok: false, message: "Bu e-posta adresine kayıtlı kullanıcı bulunamadı." };
@@ -99,6 +106,13 @@ export async function createPasswordResetRequest(email: string, purpose: Passwor
 export async function consumePasswordResetToken(token: string, newPassword: string) {
   if (!token || !newPassword || newPassword.length < 6) {
     return { ok: false, message: "Geçersiz istek." };
+  }
+
+  if (!isDatabaseConfigured()) {
+    return {
+      ok: false,
+      message: "Şifre sıfırlama şu anda veritabanı bağlantısı olmadan kullanılamıyor.",
+    };
   }
 
   const tokenDoc = (await prisma.$runCommandRaw({

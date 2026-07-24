@@ -131,17 +131,12 @@ export default function RootLayout({
           src="https://static.iyzipay.com/buyer-protection/buyer-protection.js"
           strategy="afterInteractive"
         />
-        {databaseReady ? (
-          <StoreProvider>
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-            <CookieConsent />
-          </StoreProvider>
-        ) : (
-          <>
-            <SiteHeader />
-            <main className="flex-1">
+        <StoreProvider>
+          <SiteHeader />
+          <main className="flex-1">
+            {databaseReady ? (
+              children
+            ) : (
               <section className="page-shell">
                 <div className="mx-auto max-w-2xl px-4 py-20 md:px-8">
                   <div className="panel space-y-4 text-center">
@@ -153,11 +148,11 @@ export default function RootLayout({
                   </div>
                 </div>
               </section>
-            </main>
-            <SiteFooter />
-            <CookieConsent />
-          </>
-        )}
+            )}
+          </main>
+          <SiteFooter />
+          <CookieConsent />
+        </StoreProvider>
       </body>
     </html>
   );
