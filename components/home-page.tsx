@@ -3,17 +3,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useStore } from "@/components/store-provider";
 import { formatTry } from "@/lib/money";
 import { getDefaultHomeAnnouncementText, normalizeHomeAnnouncementText } from "@/lib/site-settings";
 import { getStockCountLabel, getStockStatusClass, getStockStatusLabel } from "@/lib/stock";
 
+type HomeAnnouncement = {
+  id: string;
+  title?: string;
+  body?: string;
+  isActive?: boolean;
+  showOnHome?: boolean;
+};
+
 export function HomePage() {
+  const pathname = usePathname();
   const { products, user } = useStore();
   const role = user?.role ?? "perakende";
   const [wholesaleCustomerCount, setWholesaleCustomerCount] = useState<number | null>(null);
   const [retailCustomerCount, setRetailCustomerCount] = useState<number | null>(null);
-  const [homeAnnouncementText, setHomeAnnouncementText] = useState<string>(getDefaultHomeAnnouncementText());
+  const [announcements, setAnnouncements] = useState<HomeAnnouncement[]>([]);
+  const isHomeRoute = pathname === "/";
   const spotlight = products.slice(0, 6);
   const slides = useMemo(
     () =>
@@ -43,54 +54,64 @@ export function HomePage() {
   }, [slides]);
 
   useEffect(() => {
+    if (!isHomeRoute) {
+      return;
+    }
+
     let active = true;
 
-    fetch("/api/admin/site-settings", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) {
-          return;
-        }
+    const timer = window.setTimeout(() => {
+      Promise.allSettled([
+        fetch("/api/public/announcements")
+          .then(async (response) => {
+            if (!response.ok) {
+              return;
+            }
 
-        const data = (await response.json()) as { homeAnnouncementText?: string };
-        if (active) {
-          setHomeAnnouncementText(normalizeHomeAnnouncementText(data.homeAnnouncementText));
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setHomeAnnouncementText(getDefaultHomeAnnouncementText());
-        }
-      });
+            const data = (await response.json()) as {
+              announcements?: HomeAnnouncement[];
+            };
+            if (active) {
+              setAnnouncements((data.announcements || []).filter((item) => item.showOnHome !== false));
+            }
+          })
+          .catch(() => {
+            if (active) {
+              setAnnouncements([]);
+            }
+          }),
+        fetch("/api/public/metrics")
+          .then(async (response) => {
+            if (!response.ok) {
+              return;
+            }
 
-    fetch("/api/public/metrics", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) {
-          return;
-        }
+            const data = (await response.json()) as {
+              wholesaleCustomers?: number;
+              retailCustomers?: number;
+            };
+            if (active && Number.isFinite(data.wholesaleCustomers)) {
+              setWholesaleCustomerCount(Number(data.wholesaleCustomers));
+            }
 
-        const data = (await response.json()) as {
-          wholesaleCustomers?: number;
-          retailCustomers?: number;
-        };
-        if (active && Number.isFinite(data.wholesaleCustomers)) {
-          setWholesaleCustomerCount(Number(data.wholesaleCustomers));
-        }
-
-        if (active && Number.isFinite(data.retailCustomers)) {
-          setRetailCustomerCount(Number(data.retailCustomers));
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setWholesaleCustomerCount(null);
-          setRetailCustomerCount(null);
-        }
-      });
+            if (active && Number.isFinite(data.retailCustomers)) {
+              setRetailCustomerCount(Number(data.retailCustomers));
+            }
+          })
+          .catch(() => {
+            if (active) {
+              setWholesaleCustomerCount(null);
+              setRetailCustomerCount(null);
+            }
+          }),
+      ]);
+    }, 120);
 
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
-  }, []);
+  }, [isHomeRoute]);
 
   const metrics = [
     { label: "Aktif Ürün", value: `${products.length}+` },
@@ -99,18 +120,30 @@ export function HomePage() {
   ];
 
   const categories = Array.from(new Set(products.map((item) => item.category))).slice(0, 8);
+  const tickerItems = useMemo(() => {
+    const mapped = announcements
+      .map((item) => {
+        const body = normalizeHomeAnnouncementText(item.body || item.title || "");
+        return body;
+      })
+      .filter(Boolean);
+
+    if (mapped.length) {
+      return [...mapped, ...mapped, ...mapped];
+    }
+
+    const fallback = getDefaultHomeAnnouncementText();
+    return [fallback, fallback, fallback];
+  }, [announcements]);
 
   return (
     <section className="home-shell">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-8 md:py-12">
         <div className="home-news-ticker" aria-label="Kampanya duyurusu">
           <div className="home-news-track">
-            <span>{homeAnnouncementText}</span>
-            <span>YENİ KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
-            <span>ANLIK DUYURULAR İÇİN BU BANDI TAKIP ET</span>
-            <span>{homeAnnouncementText}</span>
-            <span>YENİ KAMPANYA VE FIRSATLAR BU ALANDA YAYINLANACAK</span>
-            <span>ANLIK DUYURULAR İÇİN BU BANDI TAKIP ET</span>
+            {tickerItems.map((item, index) => (
+              <span key={`${item}-${index}`}>{item}</span>
+            ))}
           </div>
         </div>
 
@@ -172,34 +205,34 @@ export function HomePage() {
 
           <div className="feature-stack">
             <article className="feature-card bg-[#fff4e7]">
-              <h3>Hizli Alisveris</h3>
-              <p>Anasayfadan sepete tek tikla ekle, odemeyi hizli tamamla.</p>
+              <h3>Hızlı Alışveriş</h3>
+              <p>Anasayfadan sepete tek tıklamayla ekle, ödemeyi hızlıca tamamla.</p>
             </article>
             <article className="feature-card bg-[#eaf7ff]">
-              <h3>Bulten Kampanya</h3>
-              <p>Mail bultenine katil, yeni sezon fiyatlarini kacirma.</p>
+              <h3>Bülten Kampanyası</h3>
+              <p>Mail bültenine katıl, yeni sezon fiyatlarını kaçırma.</p>
             </article>
             <article className="feature-card bg-[#eef8ed]">
               <h3>Kargo Takibi</h3>
-              <p>Siparis kodunla tum sureci anlik izleyebilirsin.</p>
+              <p>Sipariş kodunla tüm süreci anlık takip edebilirsin.</p>
             </article>
           </div>
         </div>
 
         <div className="home-campaign-row">
           <article className="home-campaign-card">
-            <p className="home-campaign-title">Toptan Alima Ozel</p>
-            <p>20+ adet siparislerde kademeli fiyat avantaji.</p>
-            <Link href="/hesap/kayit" className="menu-chip mt-3 inline-flex">Toptanci Hesabi Ac</Link>
+            <p className="home-campaign-title">Toptan Alıma Özel</p>
+            <p>20+ adet siparişlerde kademeli fiyat avantajı.</p>
+            <Link href="/hesap/kayit" className="menu-chip mt-3 inline-flex">Toptancı Hesabı Aç</Link>
           </article>
           <article className="home-campaign-card">
-            <p className="home-campaign-title">Yeni Musteri Firsati</p>
-            <p>Kayit olanlara ilk sipariste kampanya bilgilendirmesi.</p>
-            <Link href="/hesap/kayit" className="menu-chip mt-3 inline-flex">Uye Ol</Link>
+            <p className="home-campaign-title">Yeni Müşteri Fırsatı</p>
+            <p>Kaydolanlara ilk siparişte kampanya bilgisi sunuyoruz.</p>
+            <Link href="/hesap/kayit" className="menu-chip mt-3 inline-flex">Üye Ol</Link>
           </article>
           <article className="home-campaign-card">
             <p className="home-campaign-title">Koleksiyon Vitrini</p>
-            <p>Sezon trendlerini one cikan urunlerle hemen kesfet.</p>
+            <p>Sezon trendlerini öne çıkan ürünlerle hemen keşfet.</p>
             <Link href="/urunler" className="menu-chip mt-3 inline-flex">Vitrine Git</Link>
           </article>
         </div>
@@ -231,10 +264,10 @@ export function HomePage() {
                 {role === "toptanci" ? (
                   item.wholesaleEnabled && item.wholesaleTiers?.length ? (
                     <span>
-                      Toptanci: {item.wholesaleTiers[0].minQty}+ {formatTry(item.wholesaleTiers[0].unitPrice)}
+                      Toptancı: {item.wholesaleTiers[0].minQty}+ {formatTry(item.wholesaleTiers[0].unitPrice)}
                     </span>
                   ) : (
-                    <span>Toptanci: Bu urunde yok</span>
+                    <span>Toptancı: Bu üründe yok</span>
                   )
                 ) : (
                   <span>Perakende: {formatTry(item.retailPrice)}</span>
@@ -252,10 +285,10 @@ export function HomePage() {
             <div>
               <p className="hero-kicker">B2B + B2C Tek Ekranda</p>
               <h2 className="text-2xl font-extrabold text-slate-800 md:text-3xl">
-                Olgunsoy ile siparis, odeme ve kargo tek akista.
+                Olgunsoy ile sipariş, ödeme ve kargo tek akışta.
               </h2>
               <p className="section-sub mt-2">
-                Uretim gucu + dijital operasyon hiziyla, havlu tedarik surecini sade ve hizli hale getiriyoruz.
+                Üretim gücü ve dijital operasyon hızıyla, havlu tedarik sürecini sade ve hızlı hale getiriyoruz.
               </p>
             </div>
             <Link href="/kargo-takip" className="btn btn-primary">

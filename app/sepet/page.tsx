@@ -88,10 +88,10 @@ export default function CartPage() {
 
         <aside className="panel space-y-4">
           <h2 className="text-xl font-semibold">Siparis Ozeti</h2>
-          <p className="section-sub">Toplam urun: {lines.reduce((a, b) => a + b.quantity, 0)}</p>
+              <p className="section-sub">Toplam ürün: {lines.reduce((a, b) => a + b.quantity, 0)}</p>
           <p className="rounded-xl bg-slate-100 px-3 py-2 text-2xl font-extrabold text-slate-800">{formatTry(total)}</p>
           <p className="text-xs text-slate-600">
-            Odemeyi tamamlayarak <LegalDocumentTrigger label="On Bilgilendirme Formu" slug="on-bilgilendirme-formu" className="font-semibold text-slate-700 underline" /> ve <LegalDocumentTrigger label="Mesafeli Satis Sozlesmesi" slug="mesafeli-satis-sozlesmesi" className="font-semibold text-slate-700 underline" /> metinlerini kabul etmis olursun.
+              Ödemeyi tamamlayarak <LegalDocumentTrigger label="On Bilgilendirme Formu" slug="on-bilgilendirme-formu" className="font-semibold text-slate-700 underline" /> ve <LegalDocumentTrigger label="Mesafeli Satış Sözleşmesi" slug="mesafeli-satis-sozlesmesi" className="font-semibold text-slate-700 underline" /> metinlerini kabul etmiş olursun.
           </p>
           <button
             className="btn btn-primary"
@@ -110,7 +110,7 @@ export default function CartPage() {
           </button>
           {!user ? (
             <p className="text-sm text-amber-700">
-              Odeme icin once <Link href="/hesap/giris?next=%2Fsepet">hesabina giris yapmalisin</Link>.
+              Ödeme için önce <Link href="/hesap/giris?next=%2Fsepet">hesabına giriş yapmalısın</Link>.
             </p>
           ) : null}
         </aside>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiEvent } from "@/lib/api-observability";
 import { canUseMockData, isDbUnavailableError } from "@/lib/db-fallback";
+import { sendOrderStatusNotification } from "@/lib/order-notifications";
 
 const allowedStatuses = new Set<string>([
   "odeme_alindi",
@@ -21,19 +22,29 @@ export async function GET(request: Request) {
 
   let orders;
   try {
-    orders = await prisma.order.findMany({
+    const rawOrders = await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
         items: true,
+        shippingAddress: true,
       },
     });
+
+    const userIds = Array.from(new Set(rawOrders.map((order) => order.userId)));
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, email: true },
+    });
+    const userMap = new Map(users.map((user) => [user.id, user]));
+
+    orders = rawOrders.map((order) => ({
+      ...order,
+      user: userMap.get(order.userId) || {
+        id: order.userId,
+        name: "Silinmis Kullanici",
+        email: "-",
+      },
+    }));
   } catch (error) {
     if (isDbUnavailableError(error)) {
       if (canUseMockData()) {
@@ -61,6 +72,7 @@ export async function PATCH(request: Request) {
   const statusRaw = String(body.status || "").trim();
   const cargoCompany = String(body.cargoCompany || "").trim();
   const trackingCode = String(body.trackingCode || "").trim();
+  const reason = String(body.reason || "").trim();
 
   if (!orderId || !allowedStatuses.has(statusRaw)) {
     return apiError(context, 400, "VALIDATION_ERROR", "Gecerli siparis ve durum gerekli.");
@@ -104,21 +116,30 @@ export async function PATCH(request: Request) {
   }
 
   let updated;
+  let userData: { id: string; name: string; email: string } | null = null;
   try {
     updated = await prisma.order.update({
       where: { id: orderId },
       data: updateData,
       include: {
         items: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        shippingAddress: true,
       },
     });
+
+    userData = await prisma.user.findUnique({
+      where: { id: updated.userId },
+      select: { id: true, name: true, email: true },
+    });
+
+    updated = {
+      ...updated,
+      user: userData || {
+        id: updated.userId,
+        name: "Silinmis Kullanici",
+        email: "-",
+      },
+    };
   } catch (error) {
     if (isDbUnavailableError(error)) {
       if (canUseMockData()) {
@@ -134,7 +155,23 @@ export async function PATCH(request: Request) {
   logApiEvent(context, "admin.order.status_updated", {
     orderId,
     status,
+    reason: reason || undefined,
   });
+
+  try {
+    await sendOrderStatusNotification({
+      orderId,
+      status,
+      userEmail: userData?.email,
+      reason,
+    });
+  } catch (notificationError) {
+    logApiEvent(context, "admin.order.notification_failed", {
+      orderId,
+      status,
+      error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+    });
+  }
 
   return apiJson(context, { ok: true, order: updated });
 }

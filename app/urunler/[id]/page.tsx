@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductDetailActions } from "@/components/product-detail-actions";
 import { ProductImageGallery } from "@/components/product-image-gallery";
 import { canUseMockData, getMockProductById, isDbUnavailableError } from "@/lib/db-fallback";
 import { formatTry } from "@/lib/money";
+import { getProductDetailHighlights, getProductDetailSummary } from "@/lib/product-detail-copy";
 import { prisma } from "@/lib/prisma";
+import { isDatabaseObjectId, isMockProductId, shouldQueryProductCatalog } from "@/lib/product-related";
 import { absoluteUrl, truncateText } from "@/lib/seo";
 import { getSessionUser } from "@/lib/session";
 import { getStockCountLabel, getStockStatusClass, getStockStatusLabel } from "@/lib/stock";
@@ -55,6 +58,52 @@ function toProductWithTiersFromMock(id: string): ProductWithTiers | null {
       unitPrice: tier.unitPrice,
     })),
   };
+}
+
+function normalizeDetailTokens(text: string) {
+  return text
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[^a-z0-9ğüşıöç\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function getRelatedProductScore(currentProduct: ProductWithTiers, candidateProduct: ProductWithTiers) {
+  const currentCategoryTokens = normalizeDetailTokens(currentProduct.category);
+  const candidateCategoryTokens = normalizeDetailTokens(candidateProduct.category);
+  const currentTokens = new Set([
+    ...normalizeDetailTokens(currentProduct.name),
+    ...currentCategoryTokens,
+    ...normalizeDetailTokens(currentProduct.description),
+  ]);
+  const candidateTokens = new Set([
+    ...normalizeDetailTokens(candidateProduct.name),
+    ...candidateCategoryTokens,
+    ...normalizeDetailTokens(candidateProduct.description),
+  ]);
+
+  const sharedTokens = Array.from(currentTokens).filter((token) => candidateTokens.has(token));
+  const overlapRatio = sharedTokens.length / Math.max(1, Math.max(currentTokens.size, candidateTokens.size));
+
+  let score = overlapRatio * 0.6;
+
+  if (currentProduct.category.toLocaleLowerCase("tr-TR") === candidateProduct.category.toLocaleLowerCase("tr-TR")) {
+    score += 0.8;
+  } else {
+    const sharedCategoryTerms = currentCategoryTokens.filter((token) => candidateCategoryTokens.includes(token));
+    if (sharedCategoryTerms.length) {
+      score += 0.3;
+    }
+  }
+
+  const sharedNameTokens = normalizeDetailTokens(currentProduct.name).filter((token) =>
+    normalizeDetailTokens(candidateProduct.name).includes(token),
+  );
+  if (sharedNameTokens.length) {
+    score += 0.2;
+  }
+
+  return score;
 }
 
 async function resolveProductById(id: string): Promise<ProductWithTiers | null> {
@@ -176,6 +225,57 @@ export default async function ProductDetailPage({
     },
   };
 
+  const detailHighlights = getProductDetailHighlights({
+    name: product.name,
+    category: product.category,
+    wholesaleEnabled: product.wholesaleEnabled,
+    wholesaleTiers: product.wholesaleTiers,
+    stockStatus: product.stockStatus,
+  });
+  const detailSummary = getProductDetailSummary({
+    name: product.name,
+    category: product.category,
+    wholesaleEnabled: product.wholesaleEnabled,
+    wholesaleTiers: product.wholesaleTiers,
+    stockStatus: product.stockStatus,
+  });
+
+  let catalogProducts: ProductWithTiers[] = [];
+
+  if (shouldQueryProductCatalog(product.id)) {
+    catalogProducts = await prisma.product.findMany({
+      where: {
+        active: true,
+        id: { not: product.id },
+      },
+      include: {
+        wholesaleTiers: {
+          orderBy: { minQty: "asc" },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
+  const scoredRelatedProducts = [...catalogProducts]
+    .map((item) => ({
+      item,
+      score: getRelatedProductScore(product, item),
+    }))
+    .sort((left, right) => right.score - left.score);
+
+  const relatedProducts = scoredRelatedProducts
+    .filter(({ score }) => score >= 0.2)
+    .slice(0, 4)
+    .map(({ item }) => item);
+
+  const fallbackProducts = scoredRelatedProducts
+    .filter(({ item }) => !relatedProducts.some((related) => related.id === item.id))
+    .slice(0, Math.max(0, 4 - relatedProducts.length))
+    .map(({ item }) => item);
+
+  const visibleRelatedProducts = [...relatedProducts, ...fallbackProducts].slice(0, 4);
+
   return (
     <section className="page-shell">
       <script
@@ -207,18 +307,25 @@ export default async function ProductDetailPage({
 
             <div className="detail-price-grid">
               <div className="detail-price-card">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  {role === "toptanci" ? "Toptanci" : "Perakende"}
-                </p>
-                {role === "toptanci" ? (
-                  product.wholesaleEnabled && product.wholesaleTiers.length ? (
-                    <p className="text-2xl font-extrabold text-slate-800">{formatTry(product.wholesaleTiers[0].unitPrice)}</p>
-                  ) : (
-                    <p className="text-base font-semibold text-amber-700">Bu urunde toptan fiyat yok</p>
-                  )
-                ) : (
-                  <p className="text-2xl font-extrabold text-slate-800">{formatTry(product.retailPrice)}</p>
-                )}
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      {role === "toptanci" ? "Toptanci" : "Perakende"} fiyatı
+                    </p>
+                    {role === "toptanci" ? (
+                      product.wholesaleEnabled && product.wholesaleTiers.length ? (
+                        <p className="text-2xl font-extrabold text-slate-800">{formatTry(product.wholesaleTiers[0].unitPrice)}</p>
+                      ) : (
+                        <p className="text-base font-semibold text-amber-700">Bu urunde toptan fiyat yok</p>
+                      )
+                    ) : (
+                      <p className="text-2xl font-extrabold text-slate-800">{formatTry(product.retailPrice)}</p>
+                    )}
+                  </div>
+                  <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    Hızlı teslimat
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -236,12 +343,18 @@ export default async function ProductDetailPage({
             ) : null}
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-              <p>SKU: {product.sku}</p>
-              <p>
-                Stok Durumu: <span className={getStockStatusClass(product.stockStatus)}>{getStockStatusLabel(product.stockStatus)}</span>
-              </p>
-              <p>Stok Adedi: {getStockCountLabel(product.stockCount)}</p>
-              <p>Toptan satis: {product.wholesaleEnabled ? "Acik" : "Yok"}</p>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                  SKU: {product.sku}
+                </span>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                  Stok: <span className={getStockStatusClass(product.stockStatus)}>{getStockStatusLabel(product.stockStatus)}</span>
+                </span>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                  {product.wholesaleEnabled ? "Toptan satış açık" : "Toptan satış yok"}
+                </span>
+              </div>
+              <p className="mt-3">Stok adedi: {getStockCountLabel(product.stockCount)}</p>
             </div>
 
             <ProductDetailActions
@@ -252,12 +365,18 @@ export default async function ProductDetailPage({
             />
 
             <div className="detail-benefits">
-              <p className="detail-benefit-title">Bu urunde neler var?</p>
+              <p className="detail-benefit-title">Neden bu ürünü seçmelisiniz?</p>
+              <p className="mb-2 text-sm text-slate-700">{detailSummary}</p>
               <ul>
-                <li>Yuksek emicilik ve uzun omurlu dokuma</li>
-                <li>Musteri tipine gore otomatik fiyat gosterimi</li>
-                <li>Siparis sonrasi kargo takip kodu ile anlik durum izleme</li>
+                {detailHighlights.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
+            </div>
+
+            <div className="rounded-xl border border-[#8be3d5] bg-[#f8fffe] p-3 text-sm text-slate-700">
+              <p className="font-semibold text-slate-800">Ürünü tercih edenler için</p>
+              <p className="mt-1">Kaliteli dokuma, güvenli teslimat ve net fiyatlandırma ile alışveriş deneyimini daha keyifli hale getiriyoruz.</p>
             </div>
           </article>
         </div>
@@ -279,6 +398,55 @@ export default async function ProductDetailPage({
             <p className="section-sub mt-2">Otel, spa ve toplu alim projeleri icin ozel fiyatlandirma.</p>
           </article>
         </div>
+
+        {visibleRelatedProducts.length ? (
+          <div className="panel space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="hero-kicker">Benzer Ürünler</p>
+                <h2 className="text-xl font-extrabold text-slate-800">Bu ürüne benzer seçenekler</h2>
+              </div>
+              <Link href="/urunler" className="text-sm font-semibold text-slate-700">
+                Tüm ürünleri gör
+              </Link>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {visibleRelatedProducts.map((item) => {
+                const itemPrice = role === "toptanci" && item.wholesaleTiers.length
+                  ? item.wholesaleTiers[0].unitPrice
+                  : item.retailPrice;
+
+                return (
+                  <article key={item.id} className="product-card">
+                    <Link href={`/urunler/${item.id}`}>
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        className="product-image"
+                        width={600}
+                        height={600}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        loading="lazy"
+                      />
+                    </Link>
+                    <p className="product-category">{item.category}</p>
+                    <Link href={`/urunler/${item.id}`}>
+                      <h3>{item.name}</h3>
+                    </Link>
+                    <p className="product-text">{item.description}</p>
+                    <div className="price-row">
+                      <span>{role === "toptanci" ? "Toptancı" : "Perakende"}: {formatTry(itemPrice)}</span>
+                    </div>
+                    <Link href={`/urunler/${item.id}`} className="btn btn-secondary mt-2">
+                      Ürüne Git
+                    </Link>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

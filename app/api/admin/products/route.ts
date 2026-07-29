@@ -181,6 +181,7 @@ export async function PATCH(request: Request) {
     updated = await prisma.product.update({
       where: { id },
       data: {
+        sku: String(body.sku || ""),
         name: body.name,
         category: body.category,
         image: gallery[0],
@@ -189,7 +190,7 @@ export async function PATCH(request: Request) {
         stockStatus: ["stokta", "az_stokta", "tukendi"].includes(stockStatus) ? stockStatus : "stokta",
         wholesaleEnabled,
         description: body.description,
-        active: body.active,
+        active: body.active !== false,
         wholesaleTiers: {
           create: wholesaleEnabled ? tiers : [],
         },

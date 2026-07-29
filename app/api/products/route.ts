@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { apiJson, apiError, getRequestContext, logApiError } from "@/lib/api-observability";
 import { canUseMockData, getMockProducts, isDbUnavailableError } from "@/lib/db-fallback";
 
+export const revalidate = 60;
+
 function mapProduct(product: { image: string; gallery: string } & Record<string, unknown>) {
   let gallery: string[] = [product.image];
   try {
@@ -22,6 +24,14 @@ function mapProduct(product: { image: string; gallery: string } & Record<string,
 export async function GET(request: Request) {
   const context = getRequestContext(request, "/api/products");
   try {
+    if (canUseMockData()) {
+      return apiJson(context, getMockProducts(), {
+        headers: {
+          "x-data-source": "mock",
+        },
+      });
+    }
+
     const products = await prisma.product.findMany({
       where: { active: true },
       orderBy: { createdAt: "asc" },

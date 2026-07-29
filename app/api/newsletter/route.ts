@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { apiError, apiJson, getRequestContext, logApiError, logApiEvent } from "@/lib/api-observability";
+import { prisma } from "@/lib/prisma";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -53,6 +54,25 @@ export async function POST(request: Request) {
 
     if (!isValidEmail(email)) {
       return apiError(context, 400, "VALIDATION_ERROR", "Gecerli bir e-posta adresi giriniz.");
+    }
+
+    const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
+    if (existing?.active) {
+      return apiJson(context, {
+        ok: true,
+        message: "Bu e-posta zaten bültene kayıtlı.",
+      });
+    }
+
+    if (existing) {
+      await prisma.newsletterSubscriber.update({
+        where: { email },
+        data: { active: true, source },
+      });
+    } else {
+      await prisma.newsletterSubscriber.create({
+        data: { email, source, active: true },
+      });
     }
 
     const emailSent = await sendWelcomeEmail(email);

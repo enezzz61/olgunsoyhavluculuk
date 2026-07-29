@@ -83,10 +83,13 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-white/20">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-8">
-          <p className="text-xs text-white/70">Ödemeniz SSL ve PCI-DSS uyumlu güvenli altyapı ile korunur.</p>
-          <div className="w-full overflow-x-auto md:w-auto" aria-label="Desteklenen ödeme yöntemleri">
-            <div className="flex min-w-max items-center pb-1 md:justify-end">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-8">
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-100/90">Güvenli Ödeme</p>
+            <p className="text-xs text-white/70">Ödemeniz SSL ve PCI-DSS uyumlu güvenli altyapı ile korunur.</p>
+          </div>
+          <div className="w-full overflow-x-auto rounded-2xl border border-white/10 bg-white/10 px-3 py-2 backdrop-blur-sm md:w-auto" aria-label="Desteklenen ödeme yöntemleri">
+            <div className="flex min-w-max items-center md:justify-end">
               <img
                 src={paymentBadge.src}
                 alt={paymentBadge.alt}

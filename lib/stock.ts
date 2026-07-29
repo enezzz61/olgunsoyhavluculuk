@@ -3,7 +3,7 @@ export type StockStatus = "stokta" | "az_stokta" | "tukendi";
 const stockStatusLabel: Record<StockStatus, string> = {
   stokta: "Stokta",
   az_stokta: "Az Stok",
-  tukendi: "Tukendi",
+  tukendi: "Tükendi",
 };
 
 const stockStatusClass: Record<StockStatus, string> = {

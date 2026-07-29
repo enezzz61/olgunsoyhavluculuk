@@ -84,7 +84,15 @@ export function isDbUnavailableError(error: unknown) {
 }
 
 export function canUseMockData() {
-  return process.env.MOCK_DB === "true" || process.env.NODE_ENV !== "production";
+  if (process.env.MOCK_DB === "true") {
+    return true;
+  }
+
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.trim().length === 0) {
+    return true;
+  }
+
+  return false;
 }
 
 export function getMockProducts() {
@@ -103,6 +111,23 @@ export function createMockProduct(product: Product) {
 
 export function updateMockProduct(id: string, patch: Partial<Product>) {
   const index = mockProducts.findIndex((product) => product.id === id);
+  if (index < 0) {
+    return null;
+  }
+
+  const current = mockProducts[index];
+  const nextProduct = normalizeMockProduct({
+    ...current,
+    ...patch,
+    stockCount: typeof patch.stockCount === "number" ? patch.stockCount : current.stockCount,
+  });
+
+  mockProducts[index] = nextProduct;
+  return nextProduct;
+}
+
+export function updateMockProductBySku(sku: string, patch: Partial<Product>) {
+  const index = mockProducts.findIndex((product) => product.sku === sku);
   if (index < 0) {
     return null;
   }

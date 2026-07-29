@@ -4,16 +4,6 @@ import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
 export type PasswordResetPurpose = "admin" | "user";
 
-export type PasswordResetTokenRecord = {
-  id: string;
-  email: string;
-  purpose: PasswordResetPurpose;
-  token: string;
-  expiresAt: Date;
-  used: boolean;
-  createdAt: Date;
-};
-
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -96,21 +86,17 @@ export async function createPasswordResetRequest(email: string, purpose: Passwor
   }
 
   const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
   try {
-    await prisma.$runCommandRaw({
-      insert: "passwordResetTokens",
-      documents: [
-        {
-          email,
-          purpose,
-          token,
-          expiresAt: expiresAt.toISOString(),
-          used: false,
-          createdAt: new Date().toISOString(),
-        },
-      ],
+    await prisma.passwordResetToken.create({
+      data: {
+        email,
+        purpose,
+        token,
+        expiresAt,
+        used: false,
+      },
     });
   } catch (error) {
     console.error("[password-reset] Token store failed", error);
@@ -121,18 +107,28 @@ export async function createPasswordResetRequest(email: string, purpose: Passwor
   }
 
   const link = buildResetLink(token, purpose);
-  const mailResult = await sendResetEmail(user.name || email, user.name || email, link);
+  const mailResult = await sendResetEmail(email, user.name || email, link);
+
+  if (!mailResult.ok) {
+    return {
+      ok: false,
+      message: `Sifre sifirlama baglantisi olusturuldu, ancak e-posta gonderimi basarisiz oldu: ${mailResult.message}`,
+    };
+  }
 
   return {
     ok: true,
-    message: mailResult.ok
-      ? "Şifre sıfırlama bağlantısı e-posta ile gönderildi."
-      : `Şifre sıfırlama bağlantısı hazırlandı, ancak e-posta gönderimi başarısız oldu: ${mailResult.message}`,
+    message: "Sifre sifirlama baglantisi e-posta ile gonderildi.",
   };
 }
 
 export async function consumePasswordResetToken(token: string, newPassword: string) {
-  if (!token || !newPassword || newPassword.length < 6) {
+  const normalizedToken = String(token || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-f0-9]/g, "");
+
+  if (!normalizedToken || !newPassword || newPassword.length < 6) {
     return { ok: false, message: "Geçersiz istek." };
   }
 
@@ -143,13 +139,11 @@ export async function consumePasswordResetToken(token: string, newPassword: stri
     };
   }
 
-  let tokenDoc;
+  let record;
   try {
-    tokenDoc = (await prisma.$runCommandRaw({
-      find: "passwordResetTokens",
-      filter: { token, used: false },
-      limit: 1,
-    })) as { documents?: PasswordResetTokenRecord[] };
+    record = await prisma.passwordResetToken.findFirst({
+      where: { token: normalizedToken, used: false },
+    });
   } catch (error) {
     console.error("[password-reset] Token lookup failed", error);
     return {
@@ -158,7 +152,6 @@ export async function consumePasswordResetToken(token: string, newPassword: stri
     };
   }
 
-  const record = tokenDoc.documents?.[0];
   if (!record) {
     return { ok: false, message: "Geçersiz veya süresi dolmuş sıfırlama linki." };
   }
@@ -178,9 +171,9 @@ export async function consumePasswordResetToken(token: string, newPassword: stri
     data: { password: await hash(newPassword, 10) },
   });
 
-  await prisma.$runCommandRaw({
-    update: "passwordResetTokens",
-    updates: [{ q: { token }, u: { $set: { used: true } } }],
+  await prisma.passwordResetToken.update({
+    where: { token: normalizedToken },
+    data: { used: true },
   });
 
   return { ok: true, message: "Şifre başarıyla güncellendi." };

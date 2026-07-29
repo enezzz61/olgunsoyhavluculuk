@@ -113,39 +113,42 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let active = true;
-
-    fetch("/api/products")
-      .then((response) => {
-        if (!response.ok) {
-          console.error("Products fetch failed:", response.status);
-          return null;
-        }
-        return response.json();
-      })
-      .then((data: Product[] | null) => {
-        if (active && data) {
-          setProducts(data);
-        }
-      })
-      .catch((error) => console.error("Products error:", error));
-
-    fetch("/api/session")
-      .then((response) => {
-        if (!response.ok) {
-          console.error("Session fetch failed:", response.status);
-          return null;
-        }
-        return response.json();
-      })
-      .then((data: { user: AppUser | null } | null) => {
-        if (active && data) {
-          setUser(data.user ?? null);
-        }
-      })
-      .catch((error) => console.error("Session error:", error));
+    const timer = window.setTimeout(() => {
+      Promise.allSettled([
+        fetch("/api/products", { cache: "force-cache" })
+          .then((response) => {
+            if (!response.ok) {
+              console.error("Products fetch failed:", response.status);
+              return null;
+            }
+            return response.json();
+          })
+          .then((data: Product[] | null) => {
+            if (active && data) {
+              setProducts(data);
+            }
+          })
+          .catch((error) => console.error("Products error:", error)),
+        fetch("/api/session")
+          .then((response) => {
+            if (!response.ok) {
+              console.error("Session fetch failed:", response.status);
+              return null;
+            }
+            return response.json();
+          })
+          .then((data: { user: AppUser | null } | null) => {
+            if (active && data) {
+              setUser(data.user ?? null);
+            }
+          })
+          .catch((error) => console.error("Session error:", error)),
+      ]);
+    }, 50);
 
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
   }, []);
 
@@ -180,6 +183,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [cart]);
 
   const addToCart = useCallback((productId: string, quantity = 1) => {
+    const productName = products.find((item) => item.id === productId)?.name || "Urun";
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("cart:item-added", {
+          detail: {
+            productId,
+            productName,
+            quantity,
+          },
+        }),
+      );
+    }
+
     setCart((prev) => {
       const found = prev.find((item) => item.productId === productId);
       if (found) {
@@ -192,7 +208,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       return [...prev, { productId, quantity }];
     });
-  }, []);
+  }, [products]);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity <= 0) {

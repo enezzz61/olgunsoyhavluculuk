@@ -79,28 +79,47 @@ export default function CargoTrackingPage() {
         </article>
 
         {order ? (
-          <article className="panel space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-semibold">Siparis No: {order.id}</p>
+          <article className="panel space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold">Siparis No: {order.id}</p>
+                <p className="section-sub">Takip Kodu: {order.trackingCode || "-"}</p>
+              </div>
               <span className={orderStatusClass(order.status)}>{orderStatusLabel[order.status]}</span>
             </div>
-            <p className="section-sub">Takip Kodu: {order.trackingCode || "-"}</p>
-            <p className="section-sub">Kargo Firmasi: {order.cargoCompany || "-"}</p>
-            <p className="section-sub">Siparis Tarihi: {new Date(order.createdAt).toLocaleString("tr-TR")}</p>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Kargo Firması</p>
+                <p className="mt-1 font-semibold text-slate-800">{order.cargoCompany || "-"}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Sipariş Tarihi</p>
+                <p className="mt-1 font-semibold text-slate-800">{new Date(order.createdAt).toLocaleString("tr-TR")}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Toplam</p>
+                <p className="mt-1 font-semibold text-slate-800">{formatTry(order.total)}</p>
+              </div>
+            </div>
+
             {order.shippedAt ? (
-              <p className="section-sub">Kargoya Verilis: {new Date(order.shippedAt).toLocaleString("tr-TR")}</p>
+              <p className="section-sub">Kargoya Veriliş: {new Date(order.shippedAt).toLocaleString("tr-TR")}</p>
             ) : null}
             {order.deliveredAt ? (
               <p className="section-sub">Teslim Tarihi: {new Date(order.deliveredAt).toLocaleString("tr-TR")}</p>
             ) : null}
-            <ul className="space-y-1 text-sm text-slate-700">
-              {(order.items || []).map((item) => (
-                <li key={item.id}>
-                  {item.name} - {item.quantity} x {formatTry(item.unitPrice)}
-                </li>
-              ))}
-            </ul>
-            <p className="text-lg font-bold">Toplam: {formatTry(order.total)}</p>
+
+            <div className="rounded-2xl border border-slate-200 bg-white/70 p-3">
+              <p className="font-semibold">Sipariş İçeriği</p>
+              <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                {(order.items || []).map((item) => (
+                  <li key={item.id}>
+                    {item.name} - {item.quantity} x {formatTry(item.unitPrice)}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <div className="pt-2">
               <h2 className="text-lg font-semibold">Kargo Hareketleri</h2>

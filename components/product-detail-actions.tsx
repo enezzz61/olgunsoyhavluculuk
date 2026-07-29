@@ -52,7 +52,7 @@ export function ProductDetailActions({
         disabled={unavailable}
         onClick={() => {
           if (unavailable) {
-            setMessage("Bu urun tukendi.");
+            setMessage("Bu ürün tükendi.");
             return;
           }
 
@@ -61,7 +61,7 @@ export function ProductDetailActions({
           setMessage(`${productName} sepete eklendi (${nextQty} adet).`);
         }}
       >
-        {unavailable ? "Tukendi" : "Sepete Ekle"}
+        {unavailable ? "Tükendi" : "Sepete Ekle"}
       </button>
 
       <Link href="/sepet" className="btn btn-secondary w-full">
@@ -70,7 +70,7 @@ export function ProductDetailActions({
 
       {user?.role !== "toptanci" ? (
         <p className="section-sub text-xs">
-          Toptanci fiyatini gormek icin toptanci hesapla giris yapabilirsin.
+          Toptancı fiyatını görmek için toptancı hesabıyla giriş yapabilirsin.
           {minWholesaleQty > 0 ? ` Min toptanci adet: ${minWholesaleQty}` : " Bu urunde toptan satis yok."}
         </p>
       ) : null}

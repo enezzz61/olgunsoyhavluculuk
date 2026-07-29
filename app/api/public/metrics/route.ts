@@ -3,8 +3,19 @@ import { apiJson, getRequestContext } from "@/lib/api-observability";
 import { canUseMockData, isDbUnavailableError } from "@/lib/db-fallback";
 import { listMockUsers } from "@/lib/mock-auth";
 
+export const revalidate = 60;
+
 export async function GET(request: Request) {
   const context = getRequestContext(request, "/api/public/metrics");
+
+  if (canUseMockData()) {
+    const mockUsers = listMockUsers();
+    return apiJson(context, {
+      wholesaleCustomers: mockUsers.filter((user) => user.role === "toptanci").length,
+      retailCustomers: mockUsers.filter((user) => user.role === "perakende").length,
+      source: "mock",
+    });
+  }
 
   try {
     const [wholesaleCustomers, retailCustomers] = await Promise.all([

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AppToast } from "@/components/app-toast";
 import { Logo } from "@/components/logo";
 import { useStore } from "@/components/store-provider";
 
@@ -21,6 +22,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { cartCount, user } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartNotice, setCartNotice] = useState("");
   const headerRootRef = useRef<HTMLElement | null>(null);
   const isAuthPage = pathname === "/hesap/giris" || pathname === "/hesap/kayit" || pathname === "/admin/giris";
   const nextParam = useMemo(() => encodeURIComponent(pathname || "/"), [pathname]);
@@ -62,6 +64,20 @@ export function SiteHeader() {
       window.removeEventListener("keydown", onEscape);
     };
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    const onItemAdded = (event: Event) => {
+      const customEvent = event as CustomEvent<{ productName?: string; quantity?: number }>;
+      const name = customEvent.detail?.productName || "Urun";
+      const quantity = Number(customEvent.detail?.quantity || 1);
+      setCartNotice(`${name} sepete eklendi (${quantity} adet).`);
+    };
+
+    window.addEventListener("cart:item-added", onItemAdded);
+    return () => {
+      window.removeEventListener("cart:item-added", onItemAdded);
+    };
+  }, []);
 
   return (
     <header className="site-header" ref={headerRootRef}>
@@ -127,6 +143,7 @@ export function SiteHeader() {
           </div>
         </div>
       </div>
+      <AppToast message={cartNotice} type="success" onClose={() => setCartNotice("")} />
     </header>
   );
 }

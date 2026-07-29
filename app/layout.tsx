@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { StoreProvider } from "@/components/store-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { CookieConsent } from "@/components/cookie-consent";
+import { IyzicoBadgeControl } from "@/components/iyzico-badge-control";
 import { isDatabaseConfigured } from "@/lib/prisma";
 import { absoluteUrl, getSiteUrl } from "@/lib/seo";
 import "./globals.css";
@@ -124,13 +124,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        <Script id="iyzico-buyer-protection-inline" strategy="afterInteractive">
-          {`window.iyz = { token: '6e7cdd7e-3b6c-4226-96c7-d558ef1ea261', position: 'bottomLeft', ideaSoft: false, pwi: true };`}
-        </Script>
-        <Script
-          src="https://static.iyzipay.com/buyer-protection/buyer-protection.js"
-          strategy="afterInteractive"
-        />
+        <IyzicoBadgeControl />
         <StoreProvider>
           <SiteHeader />
           <main className="flex-1">

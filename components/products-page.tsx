@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useStore } from "@/components/store-provider";
 import { formatTry } from "@/lib/money";
 import { canUseWholesale, resolveUnitPrice } from "@/lib/pricing";
+import { getImageSource } from "@/lib/image-fallback";
 import { getStockCountLabel, getStockStatusClass, getStockStatusLabel, isOutOfStock } from "@/lib/stock";
 
 export function ProductsPage() {
@@ -15,6 +16,7 @@ export function ProductsPage() {
   const [sortBy, setSortBy] = useState<"onerilen" | "fiyat_artan" | "fiyat_azalan" | "ad_az" | "ad_za">("onerilen");
   const [page, setPage] = useState(1);
   const [info, setInfo] = useState("");
+  const [imageMap, setImageMap] = useState<Record<string, string>>({});
   const pageSize = 9;
   const role = user?.role ?? "perakende";
 
@@ -137,7 +139,7 @@ export function ProductsPage() {
                 setPage(1);
               }}
             >
-              Filtreleri Sifirla
+              Filtreleri Sıfırla
             </button>
           </div>
           {info ? <p className="mt-3 text-sm text-emerald-700">{info}</p> : null}
@@ -148,13 +150,17 @@ export function ProductsPage() {
             <article key={item.id} className="product-card">
               <Link href={`/urunler/${item.id}`}>
                 <Image
-                  src={item.image}
+                  src={imageMap[item.id] ?? getImageSource(item.image)}
                   alt={item.name}
                   className="product-image"
                   width={600}
                   height={600}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   loading="lazy"
+                  unoptimized
+                  onError={() => {
+                    setImageMap((prev) => ({ ...prev, [item.id]: getImageSource(item.image, undefined, true) }));
+                  }}
                 />
               </Link>
               <p className="product-category">{item.category}</p>
@@ -178,7 +184,7 @@ export function ProductsPage() {
                   ))}
                 </div>
               ) : role === "toptanci" ? (
-                <p className="text-xs text-amber-700">Bu urunde toptan fiyat yok.</p>
+                <p className="text-xs text-amber-700">Bu üründe toptan fiyat yok.</p>
               ) : null}
               <div className="mt-2 flex gap-2">
                 <button
@@ -186,7 +192,7 @@ export function ProductsPage() {
                   disabled={isOutOfStock(item.stockCount)}
                   onClick={() => {
                     if (isOutOfStock(item.stockCount)) {
-                      setInfo(`${item.name} tukendi.`);
+                      setInfo(`${item.name} tükendi.`);
                       return;
                     }
 
@@ -194,7 +200,7 @@ export function ProductsPage() {
                     setInfo(`${item.name} sepete eklendi.`);
                   }}
                 >
-                  {isOutOfStock(item.stockCount) ? "Tukendi" : "Sepete Ekle"}
+                  {isOutOfStock(item.stockCount) ? "Tükendi" : "Sepete Ekle"}
                 </button>
                 <Link href={`/urunler/${item.id}`} className="btn btn-secondary">
                   Incele
@@ -207,7 +213,7 @@ export function ProductsPage() {
         {visible.length > pageSize ? (
           <div className="panel flex flex-wrap items-center justify-between gap-3">
             <p className="section-sub">
-              Sayfa {safePage}/{totalPages} - Toplam {visible.length} urun
+              Sayfa {safePage}/{totalPages} - Toplam {visible.length} ürün
             </p>
             <div className="flex flex-wrap gap-2">
               <button

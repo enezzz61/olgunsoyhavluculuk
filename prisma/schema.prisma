@@ -26,6 +26,42 @@ enum AuditLevel {
   error
 }
 
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  purpose   String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose, used])
+  @@map("passwordResetTokens")
+}
+
+model Announcement {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  body       String
+  isActive   Boolean  @default(true)
+  showOnHome Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([isActive, showOnHome, createdAt])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  source    String?  @default("site")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, createdAt])
+}
+
 model User {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String

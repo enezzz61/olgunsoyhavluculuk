@@ -163,7 +163,12 @@ function toIsoTimestamp(value: unknown) {
 
 function mapExternalEvents(payload: unknown): ShippingEvent[] {
   const rawPayload = payload as
-    | { events?: Array<Record<string, unknown>> }
+    | {
+        events?: Array<Record<string, unknown>>;
+        trackingEvents?: Array<Record<string, unknown>>;
+        trackingHistory?: Array<Record<string, unknown>>;
+        statuses?: Array<Record<string, unknown>>;
+      }
     | Array<Record<string, unknown>>
     | null
     | undefined;
@@ -172,15 +177,106 @@ function mapExternalEvents(payload: unknown): ShippingEvent[] {
     ? rawPayload
     : Array.isArray(rawPayload?.events)
       ? rawPayload.events
-      : [];
+      : Array.isArray(rawPayload?.trackingEvents)
+        ? rawPayload.trackingEvents
+        : Array.isArray(rawPayload?.trackingHistory)
+          ? rawPayload.trackingHistory
+          : Array.isArray(rawPayload?.statuses)
+            ? rawPayload.statuses
+            : [];
 
   return rawEvents.map((event, index) => ({
-    code: normalizeString(event.code ?? event.status ?? `event_${index + 1}`),
-    title: normalizeString(event.title ?? event.label ?? event.statusText ?? "Durum Guncellemesi"),
-    description: normalizeString(event.description ?? event.detail ?? event.message ?? "Durum guncellendi."),
-    location: normalizeString(event.location ?? event.branch ?? event.city ?? "Bilinmiyor"),
-    timestamp: toIsoTimestamp(event.timestamp ?? event.date ?? event.createdAt),
+    code: normalizeString(event.code ?? event.status ?? event.statusCode ?? event.stateCode ?? event.state ?? `event_${index + 1}`),
+    title: normalizeString(event.title ?? event.label ?? event.statusText ?? event.statusDescription ?? event.description ?? event.message ?? event.state ?? "Durum Guncellemesi"),
+    description: normalizeString(event.description ?? event.detail ?? event.message ?? event.statusDescription ?? event.summary ?? event.note ?? event.information ?? "Durum guncellendi."),
+    location: normalizeString(event.location ?? event.branch ?? event.city ?? event.destination ?? event.address ?? "Bilinmiyor"),
+    timestamp: toIsoTimestamp(event.timestamp ?? event.date ?? event.createdAt ?? event.time ?? event.eventDate ?? event.eventTime),
   }));
+}
+
+function normalizeProvider(value?: string | null) {
+  const normalized = (value || "").toLowerCase();
+
+  if (normalized.includes("aras")) {
+    return "aras";
+  }
+
+  if (normalized.includes("mng")) {
+    return "mng";
+  }
+
+  if (normalized.includes("yurti") || normalized.includes("yurtici")) {
+    return "yurticikargo";
+  }
+
+  return "generic";
+}
+
+function buildTrackingEndpoint(input: CarrierTimelineInput) {
+  const baseUrl = process.env.CARGO_API_BASE_URL?.trim();
+  if (!baseUrl) {
+    return null;
+  }
+
+  const normalizedCarrier = normalizeCarrier(input.carrier);
+  const provider = normalizeProvider(process.env.CARGO_PROVIDER || normalizedCarrier);
+  const trackingCode = encodeURIComponent(input.trackingCode);
+  const customPath = process.env.CARGO_API_TRACKING_PATH?.trim();
+
+  if (customPath) {
+    return customPath
+      .replace("{trackingCode}", input.trackingCode)
+      .replace("{carrier}", normalizedCarrier)
+      .replace("{provider}", provider)
+      .replace("{encodedTrackingCode}", trackingCode);
+  }
+
+  const base = baseUrl.replace(/\/$/, "");
+  return `${base}/tracking/${trackingCode}?carrier=${encodeURIComponent(normalizedCarrier)}`;
+}
+
+function extractExternalTimeline(payload: unknown) {
+  const rawPayload = payload as Record<string, unknown> | null | undefined;
+  const dataPayload = (rawPayload?.data as Record<string, unknown> | undefined) || undefined;
+  const resultPayload = (rawPayload?.result as Record<string, unknown> | undefined) || undefined;
+  const responsePayload = (rawPayload?.response as Record<string, unknown> | undefined) || undefined;
+
+  const carrier = normalizeString(
+    rawPayload?.carrier ??
+      rawPayload?.courier ??
+      rawPayload?.provider ??
+      dataPayload?.carrier ??
+      dataPayload?.courier ??
+      resultPayload?.carrier ??
+      responsePayload?.carrier,
+  );
+
+  const eventsPayload =
+    (rawPayload?.events as Array<Record<string, unknown>> | undefined) ??
+    (rawPayload?.trackingEvents as Array<Record<string, unknown>> | undefined) ??
+    (rawPayload?.trackingHistory as Array<Record<string, unknown>> | undefined) ??
+    (rawPayload?.statuses as Array<Record<string, unknown>> | undefined) ??
+    (dataPayload?.events as Array<Record<string, unknown>> | undefined) ??
+    (dataPayload?.trackingEvents as Array<Record<string, unknown>> | undefined) ??
+    (dataPayload?.trackingHistory as Array<Record<string, unknown>> | undefined) ??
+    (dataPayload?.statuses as Array<Record<string, unknown>> | undefined) ??
+    (resultPayload?.events as Array<Record<string, unknown>> | undefined) ??
+    (resultPayload?.trackingEvents as Array<Record<string, unknown>> | undefined) ??
+    (resultPayload?.trackingHistory as Array<Record<string, unknown>> | undefined) ??
+    (resultPayload?.statuses as Array<Record<string, unknown>> | undefined) ??
+    (responsePayload?.events as Array<Record<string, unknown>> | undefined) ??
+    (responsePayload?.trackingEvents as Array<Record<string, unknown>> | undefined) ??
+    (responsePayload?.trackingHistory as Array<Record<string, unknown>> | undefined) ??
+    (responsePayload?.statuses as Array<Record<string, unknown>> | undefined) ??
+    (rawPayload as Array<Record<string, unknown>> | undefined) ??
+    (dataPayload as Array<Record<string, unknown>> | undefined) ??
+    (resultPayload as Array<Record<string, unknown>> | undefined) ??
+    (responsePayload as Array<Record<string, unknown>> | undefined);
+
+  return {
+    carrier,
+    events: mapExternalEvents(eventsPayload),
+  };
 }
 
 function shouldUseMockShipping() {
@@ -209,7 +305,7 @@ export async function resolveCarrierTimeline(input: CarrierTimelineInput): Promi
   const timeoutRaw = Number(process.env.CARGO_API_TIMEOUT_MS || "5000");
   const timeoutMs = Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : 5000;
   const normalizedCarrier = normalizeCarrier(input.carrier);
-  const token = process.env.CARGO_API_KEY?.trim();
+  const token = process.env.CARGO_API_KEY?.trim() || process.env.CARGO_API_TOKEN?.trim();
 
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -223,7 +319,10 @@ export async function resolveCarrierTimeline(input: CarrierTimelineInput): Promi
     headers["x-client-id"] = process.env.CARGO_API_CLIENT_ID.trim();
   }
 
-  const endpoint = `${baseUrl.replace(/\/$/, "")}/tracking/${encodeURIComponent(input.trackingCode)}?carrier=${encodeURIComponent(normalizedCarrier)}`;
+  const endpoint = buildTrackingEndpoint(input);
+  if (!endpoint) {
+    return toMockTimeline(input);
+  }
 
   try {
     const response = await fetch(endpoint, {
@@ -237,18 +336,16 @@ export async function resolveCarrierTimeline(input: CarrierTimelineInput): Promi
       throw new Error(`Carrier API failed with status ${response.status}`);
     }
 
-    const payload = (await response.json()) as {
-      carrier?: string;
-      events?: Array<Record<string, unknown>>;
-    };
+    const payload = (await response.json()) as Record<string, unknown>;
+    const timeline = extractExternalTimeline(payload);
+    const events = timeline.events;
 
-    const events = mapExternalEvents(payload);
     if (!events.length) {
       throw new Error("Carrier API returned empty events");
     }
 
     return {
-      carrier: normalizeCarrier(payload.carrier || normalizedCarrier),
+      carrier: normalizeCarrier(timeline.carrier || normalizedCarrier),
       events,
       source: "external",
     };

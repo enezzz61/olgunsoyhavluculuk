@@ -77,7 +77,7 @@ export function AuthPage({
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       setMessageType("error");
-      setMessage("Lütfen formdaki hatları düzeltin.");
+      setMessage("Lütfen formdaki hataları düzeltin.");
       return;
     }
 
@@ -153,8 +153,8 @@ export function AuthPage({
           <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
             <article className="panel space-y-3">
               <p className="hero-kicker">{kicker}</p>
-              <h1 className="section-title">Bu sayfa sadece admin için</h1>
-              <p className="section-sub">Normal hesapla admin girişine devam edemezsin.</p>
+              <h1 className="section-title">Bu sayfa sadece yönetici için</h1>
+              <p className="section-sub">Normal hesapla yönetici girişine devam edemezsin.</p>
               <div className="flex flex-wrap gap-2">
                 <Link href="/hesap/giris" className="btn btn-primary">
                   Normal girişe dön

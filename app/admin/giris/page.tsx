@@ -9,7 +9,7 @@ export default function AdminLoginPage() {
           <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
             <article className="panel space-y-4">
               <p className="hero-kicker">Yonetim Girişi</p>
-              <h1 className="section-title">Admin Girisi</h1>
+              <h1 className="section-title">Admin Girişi</h1>
               <p className="section-sub">Sayfa yukleniyor...</p>
             </article>
           </div>
@@ -18,9 +18,9 @@ export default function AdminLoginPage() {
     >
       <AuthPage
         mode="admin"
-        title="Admin Girisi"
+        title="Admin Girişi"
         kicker="Yonetim Girişi"
-        description="Admin paneline girmek icin yonetici hesabinla oturum ac."
+        description="Admin paneline girmek için yöneticin hesabıyla oturum aç."
         defaultNext="/admin"
         ctaHref="/hesap/giris"
         ctaLabel="Normal girise don"

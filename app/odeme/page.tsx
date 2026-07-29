@@ -30,7 +30,7 @@ export default function PaymentPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Ödeme için Giriş Yapmalısınız</h1>
+          <h1 className="text-2xl font-bold mb-4">Ödeme için giriş yapmalısınız</h1>
           <button
             onClick={() => router.push("/hesap/giris")}
             className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
@@ -46,12 +46,12 @@ export default function PaymentPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Sepetiniz Boş</h1>
+          <h1 className="text-2xl font-bold mb-4">Sepetiniz boş</h1>
           <button
             onClick={() => router.push("/urunler")}
             className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
           >
-            Alışverişe Geri Dön
+            Alışverişe geri dön
           </button>
         </div>
       </div>
