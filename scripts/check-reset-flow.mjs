@@ -25,7 +25,7 @@ async function main() {
 
   console.log("Token bulundu:", token.slice(0, 12) + "...");
 
-  const response = await fetch("http://localhost:3000/api/auth/confirm-password-reset", {
+  const response = await fetch("https://www.olgunsoyhavluculuk.com/api/auth/confirm-password-reset", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, newPassword }),

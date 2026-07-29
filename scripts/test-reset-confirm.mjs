@@ -24,7 +24,7 @@ async function main() {
   }
 
   console.log("Token:", token);
-  const apiResponse = await fetch("http://localhost:3000/api/auth/confirm-password-reset", {
+  const apiResponse = await fetch("https://www.olgunsoyhavluculuk.com/api/auth/confirm-password-reset", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, newPassword }),

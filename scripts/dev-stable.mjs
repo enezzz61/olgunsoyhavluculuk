@@ -2,7 +2,7 @@ import { spawn, execFileSync } from "node:child_process";
 import process from "node:process";
 
 const port = process.env.PORT || "3000";
-const host = process.env.HOST || "127.0.0.1";
+const host = process.env.HOST || "0.0.0.0";
 const isWindows = process.platform === "win32";
 const command = isWindows ? "cmd.exe" : "npx";
 const args = isWindows

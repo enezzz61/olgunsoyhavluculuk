@@ -9,7 +9,7 @@ function isValidEmail(email: string) {
 }
 
 function buildResetLink(token: string, purpose: PasswordResetPurpose) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim() || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim() || "https://www.olgunsoyhavluculuk.com";
   return `${baseUrl}/sifremi-unuttum?token=${encodeURIComponent(token)}&purpose=${purpose}`;
 }
 

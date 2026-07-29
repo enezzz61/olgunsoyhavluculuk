@@ -11,7 +11,7 @@ test("uses real data in development when a database URL is configured", () => {
 
   try {
     process.env.NODE_ENV = "development";
-    process.env.DATABASE_URL = "mongodb://localhost:27017/olgunsoy";
+    process.env.DATABASE_URL = "mongodb://www.olgunsoyhavluculuk.com:27017/olgunsoy";
     delete process.env.MOCK_DB;
 
     assert.equal(canUseMockData(), false);

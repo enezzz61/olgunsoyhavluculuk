@@ -21,7 +21,7 @@ const mockUsers: MockAuthUser[] = [
   {
     id: "mock-user-retail",
     name: "Perakende Demo",
-    email: "perakende@olgunsoy.com",
+    email: "perakende@olgunsoyhavluculuk.com",
     password: "123456",
     role: "perakende",
     isAdmin: false,
@@ -29,7 +29,7 @@ const mockUsers: MockAuthUser[] = [
   {
     id: "mock-user-wholesale",
     name: "Toptanci Demo",
-    email: "toptanci@olgunsoy.com",
+    email: "toptanci@olgunsoyhavluculuk.com",
     password: "123456",
     role: "toptanci",
     isAdmin: false,
@@ -37,7 +37,7 @@ const mockUsers: MockAuthUser[] = [
   {
     id: "mock-user-admin",
     name: "Admin Demo",
-    email: "admin@olgunsoy.com",
+    email: "admin@olgunsoyhavluculuk.com",
     password: "123456",
     role: "perakende",
     isAdmin: true,

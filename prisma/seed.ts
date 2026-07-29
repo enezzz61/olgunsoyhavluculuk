@@ -130,11 +130,11 @@ async function main() {
   const adminPassword = hashSync("123456", 10);
 
   await prisma.user.upsert({
-    where: { email: "admin@olgunsoy.com" },
+    where: { email: "admin@olgunsoyhavluculuk.com" },
     update: {},
     create: {
       name: "Olgunsoy Admin",
-      email: "admin@olgunsoy.com",
+      email: "admin@olgunsoyhavluculuk.com",
       password: adminPassword,
       role: UserRole.toptanci,
       isAdmin: true,
@@ -142,11 +142,11 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: "perakende@olgunsoy.com" },
+    where: { email: "perakende@olgunsoyhavluculuk.com" },
     update: {},
     create: {
       name: "Demo Perakende",
-      email: "perakende@olgunsoy.com",
+      email: "perakende@olgunsoyhavluculuk.com",
       password: adminPassword,
       role: UserRole.perakende,
       isAdmin: false,
@@ -154,11 +154,11 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: "toptanci@olgunsoy.com" },
+    where: { email: "toptanci@olgunsoyhavluculuk.com" },
     update: {},
     create: {
       name: "Demo Toptanci",
-      email: "toptanci@olgunsoy.com",
+      email: "toptanci@olgunsoyhavluculuk.com",
       password: adminPassword,
       role: UserRole.toptanci,
       isAdmin: false,

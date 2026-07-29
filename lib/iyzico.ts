@@ -39,7 +39,7 @@ export function normalizeIyzicoErrorMessage(message: string) {
 }
 
 export function getBaseUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return process.env.NEXT_PUBLIC_APP_URL || "https://www.olgunsoyhavluculuk.com";
 }
 
 export function getIyzicoConfigStatus() {
@@ -163,6 +163,7 @@ export async function createIyzicoCheckoutForm(input: {
   userId: string;
   totalTry: number;
   callbackUrl: string;
+  buyerIp?: string;
   shippingAddress: IyzipayAddress;
   billingAddress: IyzipayAddress;
   basketItems: IyzipayBasketItem[];
@@ -187,7 +188,7 @@ export async function createIyzicoCheckoutForm(input: {
       email: input.email,
       identityNumber,
       registrationAddress: input.shippingAddress.address,
-      ip: "127.0.0.1",
+      ip: input.buyerIp?.trim() || process.env.IYZICO_BUYER_IP?.trim() || "85.34.78.112",
       city: input.shippingAddress.city,
       country: input.shippingAddress.country,
       zipCode: input.shippingAddress.zipCode,

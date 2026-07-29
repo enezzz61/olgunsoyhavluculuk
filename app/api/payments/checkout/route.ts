@@ -12,6 +12,72 @@ type CheckoutItem = {
   quantity: number;
 };
 
+function isValidIpv4(value: string) {
+  const parts = value.split(".");
+  if (parts.length !== 4) {
+    return false;
+  }
+
+  return parts.every((part) => {
+    if (!/^\d{1,3}$/.test(part)) {
+      return false;
+    }
+
+    const num = Number(part);
+    return Number.isInteger(num) && num >= 0 && num <= 255;
+  });
+}
+
+function isValidIpv6(value: string) {
+  if (!value.includes(":")) {
+    return false;
+  }
+
+  return /^[0-9a-f:]+$/i.test(value);
+}
+
+function normalizeIpCandidate(value: string) {
+  const first = value.split(",")[0]?.trim() || "";
+  const withoutMappedPrefix = first.replace(/^::ffff:/i, "");
+  const withoutBrackets = withoutMappedPrefix.replace(/^\[|\]$/g, "");
+
+  const ipv4WithPort = withoutBrackets.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
+  if (ipv4WithPort?.[1]) {
+    return ipv4WithPort[1];
+  }
+
+  return withoutBrackets;
+}
+
+function getBuyerIp(request: Request) {
+  const headerNames = [
+    "x-forwarded-for",
+    "x-real-ip",
+    "x-vercel-forwarded-for",
+    "cf-connecting-ip",
+    "x-client-ip",
+    "fastly-client-ip",
+  ];
+
+  for (const headerName of headerNames) {
+    const raw = request.headers.get(headerName);
+    if (!raw) {
+      continue;
+    }
+
+    const normalized = normalizeIpCandidate(raw);
+    if (!normalized) {
+      continue;
+    }
+
+    if (isValidIpv4(normalized) || isValidIpv6(normalized)) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   const context = getRequestContext(request, "/api/payments/checkout");
   let user = null as Awaited<ReturnType<typeof getSessionUser>>;
@@ -151,6 +217,7 @@ export async function POST(request: Request) {
     const addressText = `${shippingAddress.address}, ${shippingAddress.district}/${shippingAddress.city}`;
     const contactName = shippingAddress.fullName || user.name;
     const callbackUrl = `${baseUrl}/odeme/basarili`;
+    const buyerIp = getBuyerIp(request);
 
     try {
       const session = await createIyzicoCheckoutForm({
@@ -161,6 +228,7 @@ export async function POST(request: Request) {
         userId: user.id,
         totalTry: total,
         callbackUrl,
+        buyerIp: buyerIp || undefined,
         shippingAddress: {
           contactName,
           city: shippingAddress.city,

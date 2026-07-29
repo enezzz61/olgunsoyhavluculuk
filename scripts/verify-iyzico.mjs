@@ -54,7 +54,7 @@ async function main() {
   const apiKey = required("IYZICO_API_KEY");
   const secretKey = required("IYZICO_SECRET_KEY");
   const baseUrl = process.env.IYZICO_BASE_URL?.trim() || "https://sandbox-api.iyzipay.com";
-  const callbackBase = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const callbackBase = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.olgunsoyhavluculuk.com";
 
   const conversationId = `verify_${Date.now()}`;
   const initPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
@@ -78,7 +78,7 @@ async function main() {
       email: "test@example.com",
       identityNumber: process.env.IYZICO_IDENTITY_NUMBER?.trim() || "11111111111",
       registrationAddress: "Test Mahallesi",
-      ip: "127.0.0.1",
+      ip: process.env.IYZICO_BUYER_IP?.trim() || "85.34.78.112",
       city: "Istanbul",
       country: "Turkey",
       zipCode: "34000",

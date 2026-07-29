@@ -3,7 +3,7 @@ export function getSiteUrl() {
   const fromAppEnv = process.env.APP_URL?.trim();
   const fromVercel = process.env.VERCEL_URL?.trim();
 
-  const fallback = process.env.NODE_ENV === "production" ? "https://www.olgunsoy.com" : "http://localhost:3000";
+  const fallback = "https://www.olgunsoyhavluculuk.com";
 
   const raw = fromPublicEnv || fromAppEnv || (fromVercel ? `https://${fromVercel}` : "") || fallback;
   return raw.endsWith("/") ? raw.slice(0, -1) : raw;

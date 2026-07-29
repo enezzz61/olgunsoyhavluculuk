@@ -7,7 +7,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const prisma = new PrismaClient();
-const email = process.env.ADMIN_EMAIL || "admin@olgunsoy.com";
+const email = process.env.ADMIN_EMAIL || "admin@olgunsoyhavluculuk.com";
 const password = process.env.ADMIN_PASSWORD || "123456";
 const name = process.env.ADMIN_NAME || "Olgunsoy Admin";
 const role = process.env.ADMIN_ROLE === "perakende" ? "perakende" : "toptanci";
