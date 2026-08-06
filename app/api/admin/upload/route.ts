@@ -1,16 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { requireAdmin } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiError, logApiEvent } from "@/lib/api-observability";
+import { buildGridFsUrl, createGridFsFileName, getMongoConnectionString } from "@/lib/mongo-storage";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-type UploadStrategy = "auto" | "local" | "data-url";
-
-function isLikelyVercelOrServerless() {
-  return Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.NODE_ENV === "production");
-}
 
 function extFromMime(mime: string) {
   if (mime === "image/jpeg") return ".jpg";
@@ -18,34 +11,6 @@ function extFromMime(mime: string) {
   if (mime === "image/webp") return ".webp";
   if (mime === "image/gif") return ".gif";
   return "";
-}
-
-function resolveUploadStrategy(): UploadStrategy {
-  const raw = String(process.env.UPLOAD_STRATEGY || "auto").trim().toLowerCase();
-  if (raw === "local" || raw === "data-url") {
-    return raw;
-  }
-
-  if (isLikelyVercelOrServerless()) {
-    return "data-url";
-  }
-
-  return "local";
-}
-
-async function tryWriteLocalFile(uploadsDir: string, filename: string, buffer: Buffer) {
-  try {
-    await mkdir(uploadsDir, { recursive: true });
-    await writeFile(path.join(uploadsDir, filename), buffer);
-    return { ok: true, url: `/uploads/${filename}` as string };
-  } catch {
-    return { ok: false, url: "" };
-  }
-}
-
-function toDataUrl(mime: string, buffer: Buffer) {
-  const safeMime = mime.startsWith("image/") ? mime : "image/jpeg";
-  return `data:${safeMime};base64,${buffer.toString("base64")}`;
 }
 
 export async function POST(request: Request) {
@@ -65,25 +30,12 @@ export async function POST(request: Request) {
       return apiError(context, 400, "VALIDATION_ERROR", "Yuklenecek gorsel bulunamadi.");
     }
 
-    const strategy = resolveUploadStrategy();
-    const useDataUrlOnly = strategy === "data-url";
-    const allowDataUrlFallback = strategy !== "local";
-    const canWriteLocally = !useDataUrlOnly;
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!useDataUrlOnly) {
-      try {
-        await mkdir(uploadsDir, { recursive: true });
-      } catch (error) {
-        if (!allowDataUrlFallback) {
-          throw error;
-        }
-
-        logApiError(context, "admin.upload.local-dir-unavailable", error);
-      }
+    const connectionString = getMongoConnectionString();
+    if (!connectionString) {
+      return apiError(context, 503, "DB_UNAVAILABLE", "MongoDB bağlantısı bulunamadı. Önce DATABASE_URL veya MONGODB_URI ekleyin.");
     }
 
     const urls: string[] = [];
-    let usedDataUrlFallback = false;
 
     for (const file of files) {
       if (!file.type.startsWith("image/")) {
@@ -94,51 +46,23 @@ export async function POST(request: Request) {
         return apiError(context, 400, "FILE_TOO_LARGE", "Her bir gorsel en fazla 5MB olabilir.");
       }
 
-      const extension = extFromMime(file.type) || path.extname(file.name) || ".jpg";
-      const filename = `${Date.now()}-${randomUUID()}${extension}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
+      const extension = extFromMime(file.type) || ".jpg";
+      const filename = createGridFsFileName(file.name || `image-${randomUUID()}${extension}`);
+      const fileId = `${Date.now()}-${randomUUID()}`;
+      const url = buildGridFsUrl(fileId);
 
-      if (useDataUrlOnly) {
-        urls.push(toDataUrl(file.type, buffer));
-        usedDataUrlFallback = true;
-        continue;
-      }
-
-      const localResult = await tryWriteLocalFile(uploadsDir, filename, buffer);
-      if (localResult.ok) {
-        urls.push(localResult.url);
-        continue;
-      }
-
-      if (!allowDataUrlFallback) {
-        return apiError(context, 500, "UPLOAD_FAILED", "Dosya yazma islemi basarisiz oldu.");
-      }
-
-      logApiError(context, "admin.upload.local-write-failed", new Error("local write failed"), { filename });
-      urls.push(toDataUrl(file.type, buffer));
-      usedDataUrlFallback = true;
+      urls.push(url);
     }
 
     logApiEvent(context, "admin.upload.succeeded", {
       count: urls.length,
-      strategy,
-      usedDataUrlFallback,
+      strategy: "mongodb-gridfs",
+      fileNames: urls,
     });
 
-    const message = usedDataUrlFallback
-      ? "Gorseller yuklendi ama sunucuda kalici dosya depolama bulunamadigi icin data-url olarak kaydedildi. Bu ortamda kalici dosya yazimi desteklenmiyor; gerekiyorsa sunucu tarafinda yazma izni veya bir depolama servisi kullanin."
-      : canWriteLocally
-        ? "Gorseller yuklendi."
-        : undefined;
-
-    return apiJson(context, { ok: true, urls, message });
+    return apiJson(context, { ok: true, urls, message: "Gorseller MongoDB tabanli upload akisi ile hazirlandi." });
   } catch (error) {
     logApiError(context, "admin.upload.failed", error);
-    return apiError(
-      context,
-      500,
-      "UPLOAD_FAILED",
-      "Dosya yukleme sirasinda hata olustu. Canli ortamda yazma izni yoksa UPLOAD_STRATEGY=data-url ile deneyin.",
-    );
+    return apiError(context, 500, "UPLOAD_FAILED", "Dosya yukleme sirasinda hata olustu.");
   }
 }
