@@ -52,6 +52,11 @@ export async function POST(request: Request) {
       const url = buildGridFsUrl(fileId);
 
       urls.push(url);
+      logApiEvent(context, "admin.upload.file.accepted", {
+        fileId,
+        filename,
+        mimeType: file.type,
+      });
     }
 
     logApiEvent(context, "admin.upload.succeeded", {
@@ -60,7 +65,11 @@ export async function POST(request: Request) {
       fileNames: urls,
     });
 
-    return apiJson(context, { ok: true, urls, message: "Gorseller MongoDB tabanli upload akisi ile hazirlandi." });
+    return apiJson(context, {
+      ok: true,
+      urls,
+      message: "Gorseller yuklendi. URL'ler hazirlandi.",
+    });
   } catch (error) {
     logApiError(context, "admin.upload.failed", error);
     return apiError(context, 500, "UPLOAD_FAILED", "Dosya yukleme sirasinda hata olustu.");
