@@ -2,7 +2,8 @@ import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { isDbUnavailableError } from "@/lib/db-fallback";
+import { canUseMockData, isDbUnavailableError } from "@/lib/db-fallback";
+import { findMockUserById } from "@/lib/mock-auth";
 
 const SESSION_COOKIE = "olgunsoy_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -114,6 +115,19 @@ export async function getSessionUser() {
   const parsed = parseSessionToken(token);
   if (!parsed) {
     return null;
+  }
+
+  if (canUseMockData()) {
+    const mockUser = findMockUserById(parsed.id);
+    if (mockUser) {
+      return {
+        id: mockUser.id,
+        name: mockUser.name,
+        email: mockUser.email,
+        role: mockUser.role,
+        isAdmin: mockUser.isAdmin,
+      };
+    }
   }
 
   try {
