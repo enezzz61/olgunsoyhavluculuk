@@ -6,12 +6,28 @@ import { apiError, apiJson, getRequestContext, logApiError, logApiEvent } from "
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+type UploadStrategy = "auto" | "local" | "data-url";
+
 function extFromMime(mime: string) {
   if (mime === "image/jpeg") return ".jpg";
   if (mime === "image/png") return ".png";
   if (mime === "image/webp") return ".webp";
   if (mime === "image/gif") return ".gif";
   return "";
+}
+
+function resolveUploadStrategy(): UploadStrategy {
+  const raw = String(process.env.UPLOAD_STRATEGY || "auto").trim().toLowerCase();
+  if (raw === "local" || raw === "data-url") {
+    return raw;
+  }
+
+  return "auto";
+}
+
+function toDataUrl(mime: string, buffer: Buffer) {
+  const safeMime = mime.startsWith("image/") ? mime : "image/jpeg";
+  return `data:${safeMime};base64,${buffer.toString("base64")}`;
 }
 
 export async function POST(request: Request) {
@@ -31,10 +47,24 @@ export async function POST(request: Request) {
       return apiError(context, 400, "VALIDATION_ERROR", "Yuklenecek gorsel bulunamadi.");
     }
 
+    const strategy = resolveUploadStrategy();
+    const useDataUrlOnly = strategy === "data-url";
+    const allowDataUrlFallback = strategy !== "local";
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadsDir, { recursive: true });
+    if (!useDataUrlOnly) {
+      try {
+        await mkdir(uploadsDir, { recursive: true });
+      } catch (error) {
+        if (!allowDataUrlFallback) {
+          throw error;
+        }
+
+        logApiError(context, "admin.upload.local-dir-unavailable", error);
+      }
+    }
 
     const urls: string[] = [];
+    let usedDataUrlFallback = false;
 
     for (const file of files) {
       if (!file.type.startsWith("image/")) {
@@ -47,16 +77,47 @@ export async function POST(request: Request) {
 
       const extension = extFromMime(file.type) || path.extname(file.name) || ".jpg";
       const filename = `${Date.now()}-${randomUUID()}${extension}`;
-      const filePath = path.join(uploadsDir, filename);
       const buffer = Buffer.from(await file.arrayBuffer());
-      await writeFile(filePath, buffer);
-      urls.push(`/uploads/${filename}`);
+
+      if (useDataUrlOnly) {
+        urls.push(toDataUrl(file.type, buffer));
+        usedDataUrlFallback = true;
+        continue;
+      }
+
+      const filePath = path.join(uploadsDir, filename);
+      try {
+        await writeFile(filePath, buffer);
+        urls.push(`/uploads/${filename}`);
+      } catch (error) {
+        if (!allowDataUrlFallback) {
+          throw error;
+        }
+
+        logApiError(context, "admin.upload.local-write-failed", error, { filename });
+        urls.push(toDataUrl(file.type, buffer));
+        usedDataUrlFallback = true;
+      }
     }
 
-    logApiEvent(context, "admin.upload.succeeded", { count: urls.length });
-    return apiJson(context, { ok: true, urls });
+    logApiEvent(context, "admin.upload.succeeded", {
+      count: urls.length,
+      strategy,
+      usedDataUrlFallback,
+    });
+
+    const message = usedDataUrlFallback
+      ? "Gorseller yuklendi ama sunucuda kalici dosya depolama bulunamadigi icin gecici data-url olarak kaydedildi. Kalici kullanim icin UPLOAD_STRATEGY ve depolama ayarinizi kontrol edin."
+      : undefined;
+
+    return apiJson(context, { ok: true, urls, message });
   } catch (error) {
     logApiError(context, "admin.upload.failed", error);
-    return apiError(context, 500, "UPLOAD_FAILED", "Dosya yukleme sirasinda hata olustu.");
+    return apiError(
+      context,
+      500,
+      "UPLOAD_FAILED",
+      "Dosya yukleme sirasinda hata olustu. Canli ortamda yazma izni yoksa UPLOAD_STRATEGY=data-url ile deneyin.",
+    );
   }
 }

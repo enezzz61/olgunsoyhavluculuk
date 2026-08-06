@@ -92,6 +92,7 @@ export default function AdminPage() {
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadMessageTone, setUploadMessageTone] = useState<"success" | "error" | "info">("info");
   const [isUploading, setIsUploading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
@@ -390,46 +391,54 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
     }
 
     setIsUploading(true);
+    setUploadMessageTone("info");
     setUploadMessage("Görseller yükleniyor...");
 
-    const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append("files", file));
 
-    const response = await fetch("/api/admin/upload", {
-      method: "POST",
-      body: formData,
-    });
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-    const data = (await response.json()) as {
-      ok: boolean;
-      urls?: string[];
-      message?: string;
-    };
-
-    if (!response.ok || !data.ok || !data.urls?.length) {
-      setUploadMessage(data.message || "Gorseller yuklenemedi.");
-      setIsUploading(false);
-      return;
-    }
-
-    const uploadedUrls = data.urls;
-
-    setForm((prev) => {
-      const existing = prev.gallery
-        .split(/\r?\n/)
-        .map((item) => item.trim())
-        .filter(Boolean);
-      const merged = Array.from(new Set([...existing, ...uploadedUrls]));
-
-      return {
-        ...prev,
-        image: prev.image || uploadedUrls[0],
-        gallery: merged.join("\n"),
+      const data = (await response.json()) as {
+        ok: boolean;
+        urls?: string[];
+        message?: string;
       };
-    });
 
-    setUploadMessage(`${uploadedUrls.length} görsel yüklendi.`);
-    setIsUploading(false);
+      if (!response.ok || !data.ok || !data.urls?.length) {
+        setUploadMessageTone("error");
+        setUploadMessage(data.message || "Gorseller yuklenemedi.");
+        return;
+      }
+
+      const uploadedUrls = data.urls;
+
+      setForm((prev) => {
+        const existing = prev.gallery
+          .split(/\r?\n/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+        const merged = Array.from(new Set([...existing, ...uploadedUrls]));
+
+        return {
+          ...prev,
+          image: prev.image || uploadedUrls[0],
+          gallery: merged.join("\n"),
+        };
+      });
+
+      setUploadMessageTone("success");
+      setUploadMessage(data.message || `${uploadedUrls.length} görsel yüklendi.`);
+    } catch {
+      setUploadMessageTone("error");
+      setUploadMessage("Gorseller yuklenirken baglanti hatasi olustu.");
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   async function loadData() {
@@ -964,7 +973,11 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
                       />
                     </label>
                     {isUploading ? <p className="mt-2 text-blue-700">Yükleniyor...</p> : null}
-                    {uploadMessage ? <p className="mt-2 text-emerald-700">{uploadMessage}</p> : null}
+                    {uploadMessage ? (
+                      <p className={`mt-2 ${uploadMessageTone === "error" ? "text-rose-700" : uploadMessageTone === "success" ? "text-emerald-700" : "text-blue-700"}`}>
+                        {uploadMessage}
+                      </p>
+                    ) : null}
                   </div>
                   <textarea className="input md:col-span-2 min-h-[110px]" placeholder="Galeri URL (her satira bir gorsel URL yazin)" value={form.gallery} onChange={(e) => setForm((prev) => ({ ...prev, gallery: e.target.value }))} />
                   <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
