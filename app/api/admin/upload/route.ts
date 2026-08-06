@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { requireAdmin } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiError, logApiEvent } from "@/lib/api-observability";
-import { buildGridFsUrl, createGridFsFileName, getMongoConnectionString } from "@/lib/mongo-storage";
+import { uploadImageToGridFs } from "@/lib/gridfs-upload";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -30,11 +30,6 @@ export async function POST(request: Request) {
       return apiError(context, 400, "VALIDATION_ERROR", "Yuklenecek gorsel bulunamadi.");
     }
 
-    const connectionString = getMongoConnectionString();
-    if (!connectionString) {
-      return apiError(context, 503, "DB_UNAVAILABLE", "MongoDB bağlantısı bulunamadı. Önce DATABASE_URL veya MONGODB_URI ekleyin.");
-    }
-
     const urls: string[] = [];
 
     for (const file of files) {
@@ -47,14 +42,14 @@ export async function POST(request: Request) {
       }
 
       const extension = extFromMime(file.type) || ".jpg";
-      const filename = createGridFsFileName(file.name || `image-${randomUUID()}${extension}`);
-      const fileId = `${Date.now()}-${randomUUID()}`;
-      const url = buildGridFsUrl(fileId);
+      const filename = `${Date.now()}-${randomUUID()}${extension}`;
+      const result = await uploadImageToGridFs(file, { fileName: filename });
+      const url = `/api/uploads/${result.fileId}`;
 
       urls.push(url);
       logApiEvent(context, "admin.upload.file.accepted", {
-        fileId,
-        filename,
+        fileId: result.fileId,
+        filename: result.fileName,
         mimeType: file.type,
       });
     }
