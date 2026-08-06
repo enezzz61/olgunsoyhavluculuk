@@ -33,6 +33,16 @@ function resolveUploadStrategy(): UploadStrategy {
   return "local";
 }
 
+async function tryWriteLocalFile(uploadsDir: string, filename: string, buffer: Buffer) {
+  try {
+    await mkdir(uploadsDir, { recursive: true });
+    await writeFile(path.join(uploadsDir, filename), buffer);
+    return { ok: true, url: `/uploads/${filename}` as string };
+  } catch {
+    return { ok: false, url: "" };
+  }
+}
+
 function toDataUrl(mime: string, buffer: Buffer) {
   const safeMime = mime.startsWith("image/") ? mime : "image/jpeg";
   return `data:${safeMime};base64,${buffer.toString("base64")}`;
@@ -94,19 +104,19 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const filePath = path.join(uploadsDir, filename);
-      try {
-        await writeFile(filePath, buffer);
-        urls.push(`/uploads/${filename}`);
-      } catch (error) {
-        if (!allowDataUrlFallback) {
-          throw error;
-        }
-
-        logApiError(context, "admin.upload.local-write-failed", error, { filename });
-        urls.push(toDataUrl(file.type, buffer));
-        usedDataUrlFallback = true;
+      const localResult = await tryWriteLocalFile(uploadsDir, filename, buffer);
+      if (localResult.ok) {
+        urls.push(localResult.url);
+        continue;
       }
+
+      if (!allowDataUrlFallback) {
+        return apiError(context, 500, "UPLOAD_FAILED", "Dosya yazma islemi basarisiz oldu.");
+      }
+
+      logApiError(context, "admin.upload.local-write-failed", new Error("local write failed"), { filename });
+      urls.push(toDataUrl(file.type, buffer));
+      usedDataUrlFallback = true;
     }
 
     logApiEvent(context, "admin.upload.succeeded", {
