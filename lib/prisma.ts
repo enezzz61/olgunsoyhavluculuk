@@ -2,7 +2,17 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-const databaseUrl = process.env.DATABASE_URL;
+function getDatabaseUrl() {
+  return (
+    process.env.DATABASE_URL?.trim() ||
+    process.env.MONGODB_URI?.trim() ||
+    process.env.MONGO_URL?.trim() ||
+    process.env.MONGODB_URL?.trim() ||
+    ""
+  );
+}
+
+const databaseUrl = getDatabaseUrl();
 
 export const prisma =
   globalForPrisma.prisma ??
@@ -15,5 +25,5 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export function isDatabaseConfigured() {
-  return Boolean(databaseUrl && databaseUrl.trim().length > 0);
+  return Boolean(getDatabaseUrl().length > 0);
 }

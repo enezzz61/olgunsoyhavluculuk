@@ -83,12 +83,18 @@ export function isDbUnavailableError(error: unknown) {
   );
 }
 
-export function canUseMockData() {
-  if (process.env.MOCK_DB === "true") {
-    return true;
-  }
+function getDatabaseUrl() {
+  return (
+    process.env.DATABASE_URL?.trim() ||
+    process.env.MONGODB_URI?.trim() ||
+    process.env.MONGO_URL?.trim() ||
+    process.env.MONGODB_URL?.trim() ||
+    ""
+  );
+}
 
-  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.trim().length === 0) {
+export function canUseMockData() {
+  if (process.env.MOCK_DB === "true" || process.env.MOCK_DB === "1") {
     return true;
   }
 
