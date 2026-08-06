@@ -5,24 +5,16 @@ import { isDatabaseConfigured } from "../lib/prisma";
 
 test("uses real data in development when a database URL is configured", () => {
   const previous = {
-    NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
     MOCK_DB: process.env.MOCK_DB,
   };
 
   try {
-    process.env.NODE_ENV = "development";
     process.env.DATABASE_URL = "mongodb://www.olgunsoyhavluculuk.com:27017/olgunsoy";
     delete process.env.MOCK_DB;
 
     assert.equal(canUseMockData(), false);
   } finally {
-    if (previous.NODE_ENV === undefined) {
-      delete process.env.NODE_ENV;
-    } else {
-      process.env.NODE_ENV = previous.NODE_ENV;
-    }
-
     if (previous.DATABASE_URL === undefined) {
       delete process.env.DATABASE_URL;
     } else {
@@ -39,26 +31,18 @@ test("uses real data in development when a database URL is configured", () => {
 
 test("does not use mock data unless explicitly enabled", () => {
   const previous = {
-    NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
     MONGODB_URI: process.env.MONGODB_URI,
     MOCK_DB: process.env.MOCK_DB,
   };
 
   try {
-    process.env.NODE_ENV = "development";
     delete process.env.DATABASE_URL;
     delete process.env.MONGODB_URI;
     delete process.env.MOCK_DB;
 
     assert.equal(canUseMockData(), false);
   } finally {
-    if (previous.NODE_ENV === undefined) {
-      delete process.env.NODE_ENV;
-    } else {
-      process.env.NODE_ENV = previous.NODE_ENV;
-    }
-
     if (previous.DATABASE_URL === undefined) {
       delete process.env.DATABASE_URL;
     } else {
@@ -81,14 +65,12 @@ test("does not use mock data unless explicitly enabled", () => {
 
 test("uses MongoDB connection strings from alternative env vars", () => {
   const previous = {
-    NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
     MONGODB_URI: process.env.MONGODB_URI,
     MOCK_DB: process.env.MOCK_DB,
   };
 
   try {
-    process.env.NODE_ENV = "development";
     delete process.env.DATABASE_URL;
     process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/olgunsoy";
     delete process.env.MOCK_DB;
@@ -96,12 +78,6 @@ test("uses MongoDB connection strings from alternative env vars", () => {
     assert.equal(canUseMockData(), false);
     assert.equal(isDatabaseConfigured(), true);
   } finally {
-    if (previous.NODE_ENV === undefined) {
-      delete process.env.NODE_ENV;
-    } else {
-      process.env.NODE_ENV = previous.NODE_ENV;
-    }
-
     if (previous.DATABASE_URL === undefined) {
       delete process.env.DATABASE_URL;
     } else {

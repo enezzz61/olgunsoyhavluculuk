@@ -8,6 +8,10 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 type UploadStrategy = "auto" | "local" | "data-url";
 
+function isLikelyVercelOrServerless() {
+  return Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.NODE_ENV === "production");
+}
+
 function extFromMime(mime: string) {
   if (mime === "image/jpeg") return ".jpg";
   if (mime === "image/png") return ".png";
@@ -22,7 +26,11 @@ function resolveUploadStrategy(): UploadStrategy {
     return raw;
   }
 
-  return "auto";
+  if (isLikelyVercelOrServerless()) {
+    return "data-url";
+  }
+
+  return "local";
 }
 
 function toDataUrl(mime: string, buffer: Buffer) {
@@ -50,6 +58,7 @@ export async function POST(request: Request) {
     const strategy = resolveUploadStrategy();
     const useDataUrlOnly = strategy === "data-url";
     const allowDataUrlFallback = strategy !== "local";
+    const canWriteLocally = !useDataUrlOnly;
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     if (!useDataUrlOnly) {
       try {
@@ -107,8 +116,10 @@ export async function POST(request: Request) {
     });
 
     const message = usedDataUrlFallback
-      ? "Gorseller yuklendi ama sunucuda kalici dosya depolama bulunamadigi icin gecici data-url olarak kaydedildi. Kalici kullanim icin UPLOAD_STRATEGY ve depolama ayarinizi kontrol edin."
-      : undefined;
+      ? "Gorseller yuklendi ama sunucuda kalici dosya depolama bulunamadigi icin data-url olarak kaydedildi. Bu ortamda kalici dosya yazimi desteklenmiyor; gerekiyorsa sunucu tarafinda yazma izni veya bir depolama servisi kullanin."
+      : canWriteLocally
+        ? "Gorseller yuklendi."
+        : undefined;
 
     return apiJson(context, { ok: true, urls, message });
   } catch (error) {
