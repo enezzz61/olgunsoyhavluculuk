@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { requireAdmin } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiError, logApiEvent } from "@/lib/api-observability";
 import { uploadImageToGridFs } from "@/lib/gridfs-upload";
-import { getImageExtension, isSupportedImageFile } from "@/lib/image-upload-validation";
+import { buildUploadedImageUrl, getImageExtension, isSupportedImageFile } from "@/lib/image-upload-validation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       const extension = getImageExtension(file);
       const filename = `${Date.now()}-${randomUUID()}${extension}`;
       const result = await uploadImageToGridFs(file, { fileName: filename });
-      const url = `/api/uploads/${result.fileId}`;
+      const url = buildUploadedImageUrl(result.fileName || result.fileId);
 
       urls.push(url);
       logApiEvent(context, "admin.upload.file.accepted", {

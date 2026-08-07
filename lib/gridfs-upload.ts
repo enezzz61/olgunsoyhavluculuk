@@ -107,3 +107,29 @@ export async function downloadImageFromGridFs(fileId: string) {
     ),
   };
 }
+
+export async function downloadImageFromGridFsByFileName(fileName: string) {
+  const connectionString = getMongoConnectionString();
+  if (!connectionString) {
+    throw new Error("MongoDB connection string missing");
+  }
+
+  const client = new MongoClient(connectionString);
+  await client.connect();
+
+  const dbName = connectionString.match(/\/([^/?#]+)(?:\?|#|$)/)?.[1] || "olgunsoy";
+  const db = client.db(dbName);
+  const fileRecord = (await db.collection("uploads.files").findOne({ filename: fileName })) as {
+    _id?: unknown;
+    metadata?: { contentType?: string } | null;
+    contentType?: string | null;
+  } | null;
+
+  await client.close();
+
+  if (!fileRecord?._id) {
+    throw new Error("GridFS file not found");
+  }
+
+  return downloadImageFromGridFs(String(fileRecord._id));
+}

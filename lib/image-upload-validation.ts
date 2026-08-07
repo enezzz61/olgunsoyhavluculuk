@@ -1,3 +1,9 @@
+export function buildUploadedImageUrl(fileName: string) {
+  const normalized = String(fileName || "").trim();
+  if (!normalized) return "";
+  return `/uploads/${normalized.replace(/^\/+/, "")}`;
+}
+
 export function getImageExtension(file: { name?: string; type?: string }) {
   const name = (file.name || "").toLowerCase();
   if (name.endsWith(".png")) return ".png";
