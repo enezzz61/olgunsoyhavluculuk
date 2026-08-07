@@ -72,6 +72,12 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
+  console.info("[product-create]", JSON.stringify({
+    sku: body.sku,
+    image: body.image,
+    gallery: body.gallery,
+    wholesaleEnabled: body.wholesaleEnabled,
+  }));
   const wholesaleEnabled = Boolean(body.wholesaleEnabled);
   const stockStatus = String(body.stockStatus || "stokta").trim();
   const image = String(body.image || "https://via.placeholder.com/300x300").trim();
@@ -156,6 +162,12 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
+  console.info("[product-update]", JSON.stringify({
+    id: body.id,
+    image: body.image,
+    gallery: body.gallery,
+    wholesaleEnabled: body.wholesaleEnabled,
+  }));
   const id = String(body.id || "");
   const wholesaleEnabled = Boolean(body.wholesaleEnabled);
   const stockStatus = String(body.stockStatus || "stokta").trim();

@@ -29,19 +29,21 @@ test("uses real data in development when a database URL is configured", () => {
   }
 });
 
-test("does not use mock data unless explicitly enabled", () => {
+test("falls back to mock auth in development when no database URL is configured", () => {
   const previous = {
     DATABASE_URL: process.env.DATABASE_URL,
     MONGODB_URI: process.env.MONGODB_URI,
     MOCK_DB: process.env.MOCK_DB,
+    NODE_ENV: process.env.NODE_ENV,
   };
 
   try {
     delete process.env.DATABASE_URL;
     delete process.env.MONGODB_URI;
     delete process.env.MOCK_DB;
+    (process.env as Record<string, string | undefined>).NODE_ENV = "development";
 
-    assert.equal(canUseMockData(), false);
+    assert.equal(canUseMockData(), true);
   } finally {
     if (previous.DATABASE_URL === undefined) {
       delete process.env.DATABASE_URL;
@@ -59,6 +61,12 @@ test("does not use mock data unless explicitly enabled", () => {
       delete process.env.MOCK_DB;
     } else {
       process.env.MOCK_DB = previous.MOCK_DB;
+    }
+
+    if (previous.NODE_ENV === undefined) {
+      delete (process.env as Record<string, string | undefined>).NODE_ENV;
+    } else {
+      (process.env as Record<string, string | undefined>).NODE_ENV = previous.NODE_ENV;
     }
   }
 });

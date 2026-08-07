@@ -98,6 +98,10 @@ export function canUseMockData() {
     return true;
   }
 
+  if (process.env.NODE_ENV !== "production" && !getDatabaseUrl()) {
+    return true;
+  }
+
   return false;
 }
 

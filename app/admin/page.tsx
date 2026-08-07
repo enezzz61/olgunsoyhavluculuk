@@ -558,10 +558,18 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
 
   async function createProduct(e: FormEvent) {
     e.preventDefault();
+
+    const payload = {
+      ...(editingProductId ? { id: editingProductId } : {}),
+      ...form,
+      image: form.image || (form.gallery ? form.gallery.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean)[0] || "" : ""),
+      gallery: form.gallery || (form.image ? form.image : ""),
+    };
+
     const response = await fetch("/api/admin/products", {
       method: editingProductId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editingProductId ? { id: editingProductId, ...form } : form),
+      body: JSON.stringify(payload),
     });
 
     const data = (await response.json()) as { ok: boolean; message?: string };
@@ -573,6 +581,7 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
     setMessage(editingProductId ? "Ürün güncellendi." : "Ürün eklendi.");
     setForm(initialForm);
     setEditingProductId(null);
+    setUploadMessage("");
     await loadData();
     await refreshProducts();
   }
