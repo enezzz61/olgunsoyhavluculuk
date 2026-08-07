@@ -559,6 +559,13 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
   async function createProduct(e: FormEvent) {
     e.preventDefault();
 
+    console.info("[admin-product-submit]", JSON.stringify({
+      editingProductId,
+      formImage: form.image,
+      formGallery: form.gallery,
+      formSku: form.sku,
+    }));
+
     const payload = {
       ...(editingProductId ? { id: editingProductId } : {}),
       ...form,
