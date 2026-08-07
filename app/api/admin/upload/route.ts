@@ -2,16 +2,9 @@ import { randomUUID } from "node:crypto";
 import { requireAdmin } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiError, logApiEvent } from "@/lib/api-observability";
 import { uploadImageToGridFs } from "@/lib/gridfs-upload";
+import { getImageExtension, isSupportedImageFile } from "@/lib/image-upload-validation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-function extFromMime(mime: string) {
-  if (mime === "image/jpeg") return ".jpg";
-  if (mime === "image/png") return ".png";
-  if (mime === "image/webp") return ".webp";
-  if (mime === "image/gif") return ".gif";
-  return "";
-}
 
 export async function POST(request: Request) {
   const context = getRequestContext(request, "/api/admin/upload");
@@ -33,15 +26,15 @@ export async function POST(request: Request) {
     const urls: string[] = [];
 
     for (const file of files) {
-      if (!file.type.startsWith("image/")) {
-        return apiError(context, 400, "INVALID_FILE_TYPE", "Sadece gorsel dosyasi yukleyebilirsiniz.");
+      if (!isSupportedImageFile(file)) {
+        return apiError(context, 400, "INVALID_FILE_TYPE", "Sadece jpg, png veya webp gorseli yukleyebilirsiniz.");
       }
 
       if (file.size > MAX_FILE_SIZE) {
         return apiError(context, 400, "FILE_TOO_LARGE", "Her bir gorsel en fazla 5MB olabilir.");
       }
 
-      const extension = extFromMime(file.type) || ".jpg";
+      const extension = getImageExtension(file);
       const filename = `${Date.now()}-${randomUUID()}${extension}`;
       const result = await uploadImageToGridFs(file, { fileName: filename });
       const url = `/api/uploads/${result.fileId}`;

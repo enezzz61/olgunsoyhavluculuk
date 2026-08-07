@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     const fallbackPath = path.join(process.cwd(), "public", "uploads", fileId);
     try {
       const buffer = await fs.readFile(fallbackPath);
-      const contentType = fileId.toLowerCase().endsWith(".png") ? "image/png" : fileId.toLowerCase().endsWith(".jpg") || fileId.toLowerCase().endsWith(".jpeg") ? "image/jpeg" : fileId.toLowerCase().endsWith(".webp") ? "image/webp" : fileId.toLowerCase().endsWith(".gif") ? "image/gif" : "application/octet-stream";
+      const contentType = fileId.toLowerCase().endsWith(".png") ? "image/png" : fileId.toLowerCase().endsWith(".jpg") ? "image/jpeg" : fileId.toLowerCase().endsWith(".webp") ? "image/webp" : "application/octet-stream";
 
       return new NextResponse(buffer, {
         status: 200,

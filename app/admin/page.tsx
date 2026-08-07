@@ -979,7 +979,7 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
                       <input
                         className="hidden"
                         type="file"
-                        accept="image/*"
+                        accept=".jpg,.png,.webp,image/jpeg,image/png,image/webp"
                         multiple
                         onChange={(e) => {
                           const files = Array.from(e.target.files || []);
