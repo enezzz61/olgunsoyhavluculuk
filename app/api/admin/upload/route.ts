@@ -5,6 +5,7 @@ import { uploadImageToLocalStorage } from "@/lib/local-upload";
 import { buildUploadedImageUrl, getImageExtension, isSupportedImageFile } from "@/lib/image-upload-validation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const context = getRequestContext(request, "/api/admin/upload");

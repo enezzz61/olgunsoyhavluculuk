@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { readUploadedImage } from "@/lib/local-upload";
 
+export const runtime = "nodejs";
+
 export async function GET(request: Request, { params }: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await params;
 
