@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductDetailActions } from "@/components/product-detail-actions";
 import { ProductImageGallery } from "@/components/product-image-gallery";
+import { ProductVariantPalette } from "@/components/product-variant-palette";
+import { ProductVariantProvider, type GalleryImageItem } from "@/components/product-variant-context";
 import { canUseMockData, getMockProductById, isDbUnavailableError } from "@/lib/db-fallback";
 import { getImageSource } from "@/lib/image-fallback";
 import { formatTry } from "@/lib/money";
@@ -34,11 +36,6 @@ type ProductWithTiers = {
   }>;
 };
 
-type GalleryImageItem = {
-  src: string;
-  label?: string;
-};
-
 function splitVariantEntry(raw: string) {
   const delimiters = ["|", "::", "->", " - ", " : "];
 
@@ -63,6 +60,22 @@ function splitVariantEntry(raw: string) {
   return null;
 }
 
+function extractUrlFromVariantText(raw: string) {
+  const urlPattern = /(https?:\/\/\S+|\/api\/uploads\/\S+|\/uploads\/\S+|uploads\/\S+)/i;
+  const match = raw.match(urlPattern);
+  if (!match || match.index === undefined) {
+    return null;
+  }
+
+  const src = match[1].trim();
+  const labelRaw = raw.slice(0, match.index).trim().replace(/[|:\-]+$/g, "").trim();
+
+  return {
+    label: labelRaw,
+    src,
+  };
+}
+
 function parseGalleryItem(value: string): GalleryImageItem {
   const raw = String(value || "").trim();
   if (!raw) {
@@ -71,6 +84,14 @@ function parseGalleryItem(value: string): GalleryImageItem {
 
   const split = splitVariantEntry(raw);
   if (!split) {
+    const extracted = extractUrlFromVariantText(raw);
+    if (extracted?.src) {
+      return {
+        src: getImageSource(extracted.src),
+        label: extracted.label || undefined,
+      };
+    }
+
     return { src: getImageSource(raw) };
   }
 
@@ -360,12 +381,13 @@ export default async function ProductDetailPage({
           </div>
         </div>
 
-        <div className="detail-grid">
-          <article className="panel detail-image-wrap">
-            <ProductImageGallery images={gallery} alt={product.name} />
-          </article>
+        <ProductVariantProvider images={gallery}>
+          <div className="detail-grid">
+            <article className="panel detail-image-wrap">
+              <ProductImageGallery images={gallery} alt={product.name} />
+            </article>
 
-          <article className="panel space-y-4">
+            <article className="panel space-y-4">
             <p className="product-category">{product.category}</p>
             <h1 className="section-title">{product.name}</h1>
             <p className="section-sub">{product.description}</p>
@@ -419,6 +441,7 @@ export default async function ProductDetailPage({
                   {product.wholesaleEnabled ? "Toptan satış açık" : "Toptan satış yok"}
                 </span>
               </div>
+              <ProductVariantPalette />
               <p className="mt-3">Stok adedi: {getStockCountLabel(product.stockCount)}</p>
             </div>
 
@@ -443,8 +466,9 @@ export default async function ProductDetailPage({
               <p className="font-semibold text-slate-800">Ürünü tercih edenler için</p>
               <p className="mt-1">Kaliteli dokuma, güvenli teslimat ve net fiyatlandırma ile alışveriş deneyimini daha keyifli hale getiriyoruz.</p>
             </div>
-          </article>
-        </div>
+            </article>
+          </div>
+        </ProductVariantProvider>
 
         <div className="grid gap-4 md:grid-cols-3">
           <article className="panel">
