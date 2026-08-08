@@ -39,28 +39,44 @@ type GalleryImageItem = {
   label?: string;
 };
 
+function splitVariantEntry(raw: string) {
+  const delimiters = ["|", "::", "->", " - ", " : "];
+
+  for (const delimiter of delimiters) {
+    const index = raw.indexOf(delimiter);
+    if (index <= 0) {
+      continue;
+    }
+
+    const left = raw.slice(0, index).trim();
+    const right = raw.slice(index + delimiter.length).trim();
+    if (!left || !right) {
+      continue;
+    }
+
+    return {
+      label: left,
+      src: right,
+    };
+  }
+
+  return null;
+}
+
 function parseGalleryItem(value: string): GalleryImageItem {
   const raw = String(value || "").trim();
   if (!raw) {
     return { src: "" };
   }
 
-  const separator = raw.includes("|") ? "|" : raw.includes("::") ? "::" : null;
-  if (!separator) {
-    return { src: getImageSource(raw) };
-  }
-
-  const [labelPart, ...srcParts] = raw.split(separator);
-  const srcRaw = srcParts.join(separator).trim();
-  const label = String(labelPart || "").trim();
-
-  if (!srcRaw) {
+  const split = splitVariantEntry(raw);
+  if (!split) {
     return { src: getImageSource(raw) };
   }
 
   return {
-    src: getImageSource(srcRaw),
-    label: label || undefined,
+    src: getImageSource(split.src),
+    label: split.label || undefined,
   };
 }
 

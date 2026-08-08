@@ -14,6 +14,38 @@ type ProductImageGalleryProps = {
   alt: string;
 };
 
+const COLOR_LOOKUP: Array<{ names: string[]; value: string }> = [
+  { names: ["beyaz", "white"], value: "#ffffff" },
+  { names: ["siyah", "black"], value: "#121212" },
+  { names: ["mavi", "blue", "lacivert", "navy"], value: "#2563eb" },
+  { names: ["kirmizi", "kırmızı", "red", "bordo"], value: "#dc2626" },
+  { names: ["yesil", "yeşil", "green", "haki"], value: "#16a34a" },
+  { names: ["sari", "sarı", "yellow", "gold"], value: "#eab308" },
+  { names: ["turuncu", "orange"], value: "#f97316" },
+  { names: ["mor", "purple"], value: "#7c3aed" },
+  { names: ["pembe", "pink", "fuşya", "fusya"], value: "#ec4899" },
+  { names: ["gri", "gray", "grey", "antrasit"], value: "#6b7280" },
+  { names: ["bej", "krem", "ivory"], value: "#d6c8a8" },
+  { names: ["kahverengi", "brown", "taba"], value: "#8b5e3c" },
+];
+
+function normalizeColorName(value: string) {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .replace(/ğ/g, "g")
+    .replace(/ş/g, "s")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ç/g, "c");
+}
+
+function resolveSwatchColor(label: string) {
+  const normalized = normalizeColorName(label);
+  const matched = COLOR_LOOKUP.find((entry) => entry.names.some((name) => normalized.includes(name)));
+  return matched?.value || "#94a3b8";
+}
+
 export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
   const list = useMemo(() => {
     const unique = new Map<string, GalleryImageItem>();
@@ -39,12 +71,11 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
 
   const variantOptions = useMemo(
     () =>
-      list
-        .map((item, index) => ({
-          index,
-          label: item.label,
-        }))
-        .filter((item): item is { index: number; label: string } => Boolean(item.label)),
+      list.map((item, index) => ({
+        index,
+        label: item.label?.trim() || `Secenek ${index + 1}`,
+        swatchColor: resolveSwatchColor(item.label?.trim() || ""),
+      })),
     [list],
   );
 
@@ -57,18 +88,21 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
 
   return (
     <div className="space-y-3">
-      {variantOptions.length ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Renk:</span>
+      {variantOptions.length > 1 ? (
+        <div className="flex items-center gap-3 overflow-x-auto pb-1">
+          <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Renk:</span>
           {variantOptions.map((variant) => (
             <button
               key={`${variant.label}-${variant.index}`}
               type="button"
               onClick={() => setActiveIndex(variant.index)}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${activeIndex === variant.index ? "border-slate-800 bg-slate-800 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-slate-500"}`}
+              className={`relative h-8 w-8 shrink-0 rounded-full border-2 transition ${activeIndex === variant.index ? "scale-110 border-slate-900" : "border-slate-300 hover:border-slate-500"}`}
+              style={{ backgroundColor: variant.swatchColor }}
               aria-pressed={activeIndex === variant.index}
+              aria-label={`Renk: ${variant.label}`}
+              title={variant.label}
             >
-              {variant.label}
+              {activeIndex === variant.index ? <span className="absolute inset-0 rounded-full ring-2 ring-slate-900/20" /> : null}
             </button>
           ))}
         </div>
@@ -107,29 +141,31 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
         ) : null}
       </div>
 
-      <div className="thumb-row">
-        {list.map((image, index) => (
-          <button
-            key={`${image.src}-${index}`}
-            type="button"
-            className={`thumb-btn ${index === activeIndex ? "thumb-btn-active" : ""}`}
-            onClick={() => setActiveIndex(index)}
-            aria-label={image.label ? `Renk: ${image.label}` : `Gorsel ${index + 1}`}
-          >
-            <Image
-              src={imageMap[image.src] ?? getImageSource(image.src)}
-              alt={image.label ? `${alt} ${image.label}` : `${alt} ${index + 1}`}
-              width={120}
-              height={120}
-              className="thumb-image"
-              unoptimized
-              onError={() => {
-                setImageMap((prev) => ({ ...prev, [image.src]: getImageSource(image.src, undefined, true) }));
-              }}
-            />
-          </button>
-        ))}
-      </div>
+      {variantOptions.length <= 1 ? (
+        <div className="thumb-row">
+          {list.map((image, index) => (
+            <button
+              key={`${image.src}-${index}`}
+              type="button"
+              className={`thumb-btn ${index === activeIndex ? "thumb-btn-active" : ""}`}
+              onClick={() => setActiveIndex(index)}
+              aria-label={image.label ? `Renk: ${image.label}` : `Gorsel ${index + 1}`}
+            >
+              <Image
+                src={imageMap[image.src] ?? getImageSource(image.src)}
+                alt={image.label ? `${alt} ${image.label}` : `${alt} ${index + 1}`}
+                width={120}
+                height={120}
+                className="thumb-image"
+                unoptimized
+                onError={() => {
+                  setImageMap((prev) => ({ ...prev, [image.src]: getImageSource(image.src, undefined, true) }));
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

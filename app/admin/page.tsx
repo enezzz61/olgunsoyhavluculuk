@@ -997,7 +997,7 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
                     ) : null}
                   </div>
                   <textarea className="input md:col-span-2 min-h-[110px]" placeholder="Galeri URL (her satira bir gorsel URL yazin)" value={form.gallery} onChange={(e) => setForm((prev) => ({ ...prev, gallery: e.target.value }))} />
-                  <p className="md:col-span-2 text-xs text-slate-500">Renk varyanti icin satir formati: Renk|URL (ornek: Beyaz|/api/uploads/ornek.jpg)</p>
+                  <p className="md:col-span-2 text-xs text-slate-500">Renk varyanti icin satir formati: Renk|URL. Ayrica Renk - URL, Renk::URL ve Renk : URL da desteklenir.</p>
                   <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
                     <input
                       type="checkbox"
