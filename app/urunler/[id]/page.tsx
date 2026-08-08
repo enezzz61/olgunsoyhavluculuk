@@ -34,6 +34,62 @@ type ProductWithTiers = {
   }>;
 };
 
+type GalleryImageItem = {
+  src: string;
+  label?: string;
+};
+
+function parseGalleryItem(value: string): GalleryImageItem {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return { src: "" };
+  }
+
+  const separator = raw.includes("|") ? "|" : raw.includes("::") ? "::" : null;
+  if (!separator) {
+    return { src: getImageSource(raw) };
+  }
+
+  const [labelPart, ...srcParts] = raw.split(separator);
+  const srcRaw = srcParts.join(separator).trim();
+  const label = String(labelPart || "").trim();
+
+  if (!srcRaw) {
+    return { src: getImageSource(raw) };
+  }
+
+  return {
+    src: getImageSource(srcRaw),
+    label: label || undefined,
+  };
+}
+
+function parseProductGallery(image: string, galleryRaw: string): GalleryImageItem[] {
+  let rawItems: string[] = [image];
+  try {
+    const parsed = JSON.parse(galleryRaw || "[]");
+    if (Array.isArray(parsed) && parsed.length) {
+      rawItems = parsed.map((item) => String(item));
+    }
+  } catch {
+    rawItems = [image];
+  }
+
+  const parsedItems = rawItems.map((item) => parseGalleryItem(item)).filter((item) => item.src);
+  if (!parsedItems.length) {
+    return [{ src: getImageSource(image) }];
+  }
+
+  const unique = new Map<string, GalleryImageItem>();
+  for (const item of parsedItems) {
+    if (!unique.has(item.src)) {
+      unique.set(item.src, item);
+    }
+  }
+
+  return Array.from(unique.values());
+}
+
 function toProductWithTiersFromMock(id: string): ProductWithTiers | null {
   const mock = getMockProductById(id);
   if (!mock) {
@@ -195,21 +251,13 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  let gallery: string[] = [product.image];
-  try {
-    const parsed = JSON.parse(product.gallery || "[]");
-    if (Array.isArray(parsed) && parsed.length) {
-      gallery = parsed.map((item) => getImageSource(String(item)));
-    }
-  } catch {
-    gallery = [getImageSource(product.image)];
-  }
+  const gallery = parseProductGallery(product.image, product.gallery);
 
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    image: gallery.map((item) => absoluteUrl(getImageSource(item))),
+    image: gallery.map((item) => absoluteUrl(item.src)),
     description: truncateText(product.description || product.name, 300),
     sku: product.sku,
     brand: {
