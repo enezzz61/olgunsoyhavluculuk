@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AdminAnnouncementsPanel } from "@/components/admin-announcements-panel";
 import { AdminNewsletterPanel } from "@/components/admin-newsletter-panel";
 import { useStore } from "@/components/store-provider";
+import { getImageSource } from "@/lib/image-fallback";
 import { formatTry } from "@/lib/money";
 import { orderStatusClass, orderStatusLabel, type OrderStatus } from "@/lib/order-status";
 import { buildOrderReceiptHtml, getOrderWorkflowActions, resolveOrderStatusFromAction } from "@/lib/order-workflow";
@@ -1069,7 +1070,7 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
                       {visibleProducts.map((item) => (
                         <article key={item.id} className={`rounded-2xl border border-slate-200 bg-white p-3 shadow-sm ${editingProductId === item.id ? "border-blue-300 bg-blue-50" : ""}`}>
                           <img
-                            src={item.image || "/logo.jpg"}
+                            src={getImageSource(item.image)}
                             alt={item.name}
                             className="mb-3 h-28 w-full rounded-xl border border-slate-200 object-cover"
                             loading="lazy"

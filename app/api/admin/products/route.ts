@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { apiError, apiJson, getRequestContext, logApiEvent } from "@/lib/api-observability";
 import { canUseMockData, createMockProduct, deleteMockProduct, getMockProducts, isDbUnavailableError, updateMockProduct } from "@/lib/db-fallback";
+import { getImageSource } from "@/lib/image-fallback";
 import type { Product } from "@/lib/products";
 
 function parseGallery(value: unknown, fallbackImage: string) {
@@ -17,18 +18,20 @@ function parseGallery(value: unknown, fallbackImage: string) {
 }
 
 function mapProduct(product: { image: string; gallery: string } & Record<string, unknown>) {
-  let gallery: string[] = [product.image];
+  const normalizedImage = getImageSource(product.image);
+  let gallery: string[] = [normalizedImage];
   try {
     const parsed = JSON.parse(product.gallery || "[]");
     if (Array.isArray(parsed) && parsed.length) {
-      gallery = parsed.map((item) => String(item));
+      gallery = parsed.map((item) => getImageSource(String(item)));
     }
   } catch {
-    gallery = [product.image];
+    gallery = [normalizedImage];
   }
 
   return {
     ...product,
+    image: normalizedImage,
     gallery,
   };
 }

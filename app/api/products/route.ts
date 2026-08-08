@@ -1,22 +1,25 @@
 import { prisma } from "@/lib/prisma";
 import { apiJson, apiError, getRequestContext, logApiError } from "@/lib/api-observability";
 import { canUseMockData, getMockProducts, isDbUnavailableError } from "@/lib/db-fallback";
+import { getImageSource } from "@/lib/image-fallback";
 
 export const revalidate = 60;
 
 function mapProduct(product: { image: string; gallery: string } & Record<string, unknown>) {
-  let gallery: string[] = [product.image];
+  const normalizedImage = getImageSource(product.image);
+  let gallery: string[] = [normalizedImage];
   try {
     const parsed = JSON.parse(product.gallery || "[]");
     if (Array.isArray(parsed) && parsed.length) {
-      gallery = parsed.map((item) => String(item));
+      gallery = parsed.map((item) => getImageSource(String(item)));
     }
   } catch {
-    gallery = [product.image];
+    gallery = [normalizedImage];
   }
 
   return {
     ...product,
+    image: normalizedImage,
     gallery,
   };
 }
@@ -25,7 +28,7 @@ export async function GET(request: Request) {
   const context = getRequestContext(request, "/api/products");
   try {
     if (canUseMockData()) {
-      return apiJson(context, getMockProducts(), {
+      return apiJson(context, getMockProducts().map((product) => mapProduct(product as never)), {
         headers: {
           "x-data-source": "mock",
         },
@@ -45,7 +48,7 @@ export async function GET(request: Request) {
     return apiJson(context, products.map((product) => mapProduct(product)));
   } catch (error) {
     if (isDbUnavailableError(error) && canUseMockData()) {
-      return apiJson(context, getMockProducts(), {
+      return apiJson(context, getMockProducts().map((product) => mapProduct(product as never)), {
         headers: {
           "x-data-source": "mock",
         },
@@ -54,7 +57,7 @@ export async function GET(request: Request) {
 
     logApiError(context, "products.fetch_failed", error);
     if (canUseMockData()) {
-      return apiJson(context, getMockProducts(), {
+      return apiJson(context, getMockProducts().map((product) => mapProduct(product as never)), {
         headers: {
           "x-data-source": "mock-fallback",
         },

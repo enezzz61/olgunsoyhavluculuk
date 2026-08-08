@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ProductDetailActions } from "@/components/product-detail-actions";
 import { ProductImageGallery } from "@/components/product-image-gallery";
 import { canUseMockData, getMockProductById, isDbUnavailableError } from "@/lib/db-fallback";
+import { getImageSource } from "@/lib/image-fallback";
 import { formatTry } from "@/lib/money";
 import { getProductDetailHighlights, getProductDetailSummary } from "@/lib/product-detail-copy";
 import { prisma } from "@/lib/prisma";
@@ -165,7 +166,7 @@ export async function generateMetadata({
       type: "website",
       images: [
         {
-          url: absoluteUrl(product.image),
+          url: absoluteUrl(getImageSource(product.image)),
           alt: product.name,
         },
       ],
@@ -174,7 +175,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: product.name,
       description,
-      images: [absoluteUrl(product.image)],
+      images: [absoluteUrl(getImageSource(product.image))],
     },
   };
 }
@@ -198,17 +199,17 @@ export default async function ProductDetailPage({
   try {
     const parsed = JSON.parse(product.gallery || "[]");
     if (Array.isArray(parsed) && parsed.length) {
-      gallery = parsed.map((item) => String(item));
+      gallery = parsed.map((item) => getImageSource(String(item)));
     }
   } catch {
-    gallery = [product.image];
+    gallery = [getImageSource(product.image)];
   }
 
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    image: gallery.map((item) => absoluteUrl(item)),
+    image: gallery.map((item) => absoluteUrl(getImageSource(item))),
     description: truncateText(product.description || product.name, 300),
     sku: product.sku,
     brand: {
@@ -421,7 +422,7 @@ export default async function ProductDetailPage({
                   <article key={item.id} className="product-card">
                     <Link href={`/urunler/${item.id}`}>
                       <Image
-                        src={item.image}
+                        src={getImageSource(item.image)}
                         alt={item.name}
                         className="product-image"
                         width={600}
