@@ -942,7 +942,10 @@ setBulkUploadMessage("Excel/CSV dosyası yükleniyor...");
                   <input className="input" placeholder="SKU (HV-200)" value={form.sku} onChange={(e) => setForm((prev) => ({ ...prev, sku: e.target.value }))} required />
                   <input className="input" placeholder="Ürün Adı" value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} required />
                   <input className="input" placeholder="Kategori" value={form.category} onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))} required />
-                  <input className="input" placeholder="Gorsel URL" value={form.image} onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))} required />
+                  <div className="space-y-1">
+                    <input className="input" placeholder="Gorsel URL" value={form.image} onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))} required />
+                    <p className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800">Ana Gorsel: Urunler sayfasinda gorunecek gorsel</p>
+                  </div>
                   <label className="space-y-1 text-sm text-slate-700">
                     <span>Perakende fiyat</span>
                     <input className="input" type="number" min="0" value={form.retailPrice} onChange={(e) => setForm((prev) => ({ ...prev, retailPrice: Number(e.target.value) }))} required />
