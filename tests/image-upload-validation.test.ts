@@ -18,6 +18,10 @@ test("rejects unsupported image formats", () => {
   assert.equal(isSupportedImageFile({ name: "photo.bmp", type: "image/bmp" }), false);
 });
 
-test("builds /uploads/<filename> URLs for saved product images", () => {
-  assert.equal(buildUploadedImageUrl("1785330841078-65719ce3-05fa-4cb1-afde-169bdf9d4697.jpg"), "/uploads/1785330841078-65719ce3-05fa-4cb1-afde-169bdf9d4697.jpg");
+test("builds /api/uploads/<filename> URLs for saved product images", () => {
+  assert.equal(buildUploadedImageUrl("1785330841078-65719ce3-05fa-4cb1-afde-169bdf9d4697.jpg"), "/api/uploads/1785330841078-65719ce3-05fa-4cb1-afde-169bdf9d4697.jpg");
+});
+
+test("sanitizes path-like values when building upload URL", () => {
+  assert.equal(buildUploadedImageUrl("/tmp/foo/bar.png"), "/api/uploads/bar.png");
 });

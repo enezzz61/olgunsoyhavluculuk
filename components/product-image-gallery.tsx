@@ -50,7 +50,7 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
           <div
             className="zoom-layer"
             style={{
-              backgroundImage: `url(${activeImage})`,
+              backgroundImage: `url(${activeImageSrc})`,
               backgroundPosition: `${zoom.x}% ${zoom.y}%`,
             }}
           />

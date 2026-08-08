@@ -1,7 +1,9 @@
 export function buildUploadedImageUrl(fileName: string) {
   const normalized = String(fileName || "").trim();
   if (!normalized) return "";
-  return `/uploads/${normalized.replace(/^\/+/, "")}`;
+  const safeName = normalized.replace(/^\/+/, "").split(/[\\/]/).pop() || "";
+  if (!safeName) return "";
+  return `/api/uploads/${encodeURIComponent(safeName)}`;
 }
 
 export function getImageExtension(file: { name?: string; type?: string }) {

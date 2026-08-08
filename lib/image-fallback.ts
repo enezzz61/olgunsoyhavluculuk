@@ -10,7 +10,20 @@ export function getImageSource(
   }
 
   if (typeof src === "string" && src.trim()) {
-    return src;
+    const normalized = src.trim();
+    if (normalized.startsWith("/api/uploads/")) {
+      return normalized;
+    }
+
+    if (normalized.startsWith("/uploads/")) {
+      return `/api${normalized}`;
+    }
+
+    if (normalized.startsWith("uploads/")) {
+      return `/api/${normalized}`;
+    }
+
+    return normalized;
   }
 
   return fallbackSrc;
